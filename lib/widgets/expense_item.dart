@@ -9,15 +9,25 @@ class ExpenseItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      // rectangular border
+      shape: RoundedRectangleBorder(
+        // xtics of he border itself
+        side: BorderSide(width: 1, color: Colors.grey),
+        borderRadius: BorderRadius.circular(24),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 15,
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(expense.title, textAlign: TextAlign.left),
-            SizedBox(height: 15),
+            Text(
+              expense.title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: 5),
             //row for category and date
             Row(
               children: [

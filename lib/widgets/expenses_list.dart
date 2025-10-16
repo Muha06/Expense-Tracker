@@ -16,9 +16,20 @@ class ExpensesList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: expenses.length,
+      //styling the individual item
       itemBuilder: (ctx, idx) => Dismissible(
+        background: Container(
+          color: Theme.of(
+            context,
+          ).colorScheme.error.withValues(alpha: 0.75),
+          margin: EdgeInsets.symmetric(
+            horizontal: Theme.of(
+              context,
+            ).cardTheme.margin!.horizontal,
+          ),
+        ),
         //key: asks which item?
-        //it uniquely identifies which item was dismissed 
+        //it uniquely identifies which item was dismissed
         key: ValueKey(expenses[idx]),
         //onDismissed wants a callback that will run after dsimissing the widget
         onDismissed: (direction) {
