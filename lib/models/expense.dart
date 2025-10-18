@@ -42,6 +42,12 @@ class ExpenseBucket {
   final Category category;
   final List<Expense> expenses;
 
+  //Filtering expenses of one category
+  ExpenseBucket.forCategory(List<Expense> allExpenses, this.category)
+    : expenses = allExpenses
+          .where((expense) => expense.category == category)
+          .toList();
+
   //getter method that returns total sum of expense amount
   int get totalAmount {
     int sum = 0;

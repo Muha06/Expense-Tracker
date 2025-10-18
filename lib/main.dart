@@ -75,7 +75,7 @@ void main() {
         colorScheme: kcolorScheme,
         appBarTheme: const AppBarTheme().copyWith(
           backgroundColor: kcolorScheme.primary,
-          foregroundColor: kcolorScheme.onPrimaryContainer,
+          foregroundColor: kcolorScheme.onPrimary,
           titleTextStyle: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
