@@ -32,3 +32,23 @@ class Expense {
   //method to GET formatted date, returns the formatted date
   String get formattedDate => formatter.format(date);
 }
+
+class ExpenseBucket {
+  const ExpenseBucket({
+    required this.category,
+    required this.expenses,
+  });
+  //properties
+  final Category category;
+  final List<Expense> expenses;
+
+  //getter method that returns total sum of expense amount
+  int get totalAmount {
+    int sum = 0;
+    //find total sum of amounts
+    for (final expense in expenses) {
+      sum += expense.amount;
+    }
+    return sum;
+  }
+}

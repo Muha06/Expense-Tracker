@@ -12,7 +12,7 @@ class ExpenseItem extends StatelessWidget {
       // rectangular border
       shape: RoundedRectangleBorder(
         // xtics of he border itself
-        side: BorderSide(width: 1, color: Colors.grey),
+        side: const BorderSide(width: 1, color: Colors.grey),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Padding(
@@ -25,20 +25,32 @@ class ExpenseItem extends StatelessWidget {
           children: [
             Text(
               expense.title,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             //row for category and date
             Row(
               children: [
-                Text('KES ${expense.amount.toStringAsFixed(2)}'),
-                Spacer(),
-                Row(
-                  children: [
-                    Icon(categoryIcons[expense.category]),
-                    const SizedBox(width: 5),
-                    Text(expense.formattedDate.toString()),
-                  ],
+                Expanded(
+                  child: Text(
+                    'KES ${expense.amount.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                //row for icon and date
+                SizedBox(
+                  width: 110,
+                  child: Row(
+                    children: [
+                      Icon(categoryIcons[expense.category]),
+                      const SizedBox(width: 5),
+                      Text(
+                        expense.formattedDate.toString(),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

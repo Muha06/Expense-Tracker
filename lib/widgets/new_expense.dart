@@ -58,14 +58,20 @@ class _NewExpenseState extends State<NewExpense> {
         context: context,
         builder: (ctx) {
           return AlertDialog(
-            title: Text('Invalid Input'),
-            content: Text('Ebu angalia kama umeandika vizuri'),
+            title: Text(
+              'Invalid Input',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            content: Text(
+              'Ebu angalia kama umeandika vizuri',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(ctx);
                 },
-                child: Text('Okay'),
+                child: const Text('Okay'),
               ),
             ],
           );
@@ -130,6 +136,7 @@ class _NewExpenseState extends State<NewExpense> {
                       expenseDate == null
                           ? 'No date selected'
                           : formatter.format(expenseDate!),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(width: 5),
                     IconButton(
@@ -168,7 +175,7 @@ class _NewExpenseState extends State<NewExpense> {
                   });
                 },
               ),
-              
+
               const Spacer(),
 
               TextButton(
