@@ -1,5 +1,4 @@
 import 'package:expense_tracker/widgets/chart/chart.dart';
-import 'package:expense_tracker/widgets/chart/chart_bar.dart';
 import 'package:expense_tracker/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
@@ -65,8 +64,11 @@ class _ExpensesState extends State<Expenses> {
 
   @override
   Widget build(BuildContext context) {
-    Widget mainContent = const Center(
-      child: Text('No expenses added'),
+    Widget mainContent = Center(
+      child: Text(
+        'No expenses added',
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
     );
     if (registeredExpenses.isEmpty) {
       mainContent;
