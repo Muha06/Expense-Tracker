@@ -1,50 +1,36 @@
+
+import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Expenses extends StatefulWidget {
+class Expenses extends ConsumerStatefulWidget {
   const Expenses({super.key});
 
   @override
-  State<Expenses> createState() => _ExpensesState();
+  ConsumerState<Expenses> createState() => _ExpensesState();
 }
 
-class _ExpensesState extends State<Expenses> {
-  final List<Expense> registeredExpenses = [
-    Expense(
-      title: 'chapati maragwe',
-      amount: 70,
-      date: DateTime.now(),
-      category: Category.food,
-    ),
-  ];
-
+class _ExpensesState extends ConsumerState<Expenses> {
   void _showExpenseOverlay() {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       builder: (ctx) {
-        return NewExpense(
-          registeredExpenses: registeredExpenses,
-          onAddExpense: addExpense,
-        );
+        return const NewExpense();
       },
     );
   }
 
-  void addExpense(Expense expense) {
-    setState(() {
-      registeredExpenses.add(expense);
-    });
-  }
-
   void deleteExpense(Expense expense) {
-    final expenseIndex = registeredExpenses.indexOf(expense);
-    setState(() {
-      registeredExpenses.remove(expense);
-    });
+    //find expene index
+    final expenseIndex = ref.read(expenseListProvider).indexOf(expense);
+    //remove
+    ref.read(expenseListProvider.notifier).deleteExpense(expense);
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -53,9 +39,9 @@ class _ExpensesState extends State<Expenses> {
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            setState(() {
-              registeredExpenses.insert(expenseIndex, expense);
-            });
+            ref
+                .read(expenseListProvider.notifier)
+                .insertExpense(expense, expenseIndex);
           },
         ),
       ),
@@ -64,20 +50,21 @@ class _ExpensesState extends State<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    final allExpenses = ref.read(expenseListProvider);
+
+    final width = MediaQuery.of(context).size.width;
+
     Widget mainContent = Center(
       child: Text(
         'No expenses added',
         style: Theme.of(context).textTheme.titleSmall,
       ),
     );
-    if (registeredExpenses.isEmpty) {
+    if (allExpenses.isEmpty) {
       mainContent;
     } else {
       mainContent = Expanded(
-        child: ExpensesList(
-          expenses: registeredExpenses,
-          onDeleteExpense: deleteExpense,
-        ),
+        child: ExpensesList(onDeleteExpense: deleteExpense),
       );
     }
 
@@ -91,12 +78,19 @@ class _ExpensesState extends State<Expenses> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Chart(expenses: registeredExpenses),
-          Expanded(child: mainContent),
-        ],
-      ),
+      body: width > 600
+          ? Row(
+              children: [
+                Expanded(flex: 1, child: Chart(expenses: allExpenses)),
+                Expanded(flex: 2, child: mainContent),
+              ],
+            )
+          : Column(
+              children: [
+                Chart(expenses: allExpenses),
+                Expanded(child: mainContent),
+              ],
+            ),
     );
   }
 }

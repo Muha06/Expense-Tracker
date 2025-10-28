@@ -1,41 +1,109 @@
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 final formatter = DateFormat.yMd();
 
-class NewExpense extends StatefulWidget {
-  const NewExpense({
-    super.key,
-    required this.registeredExpenses,
-    required this.onAddExpense,
-  });
-  final List<Expense> registeredExpenses;
-  final void Function(Expense expense) onAddExpense;
+class NewExpense extends ConsumerStatefulWidget {
+  const NewExpense({super.key});
 
   @override
-  State<NewExpense> createState() => _NewExpenseState();
+  ConsumerState<NewExpense> createState() => _NewExpenseState();
 }
 
-class _NewExpenseState extends State<NewExpense> {
+class _NewExpenseState extends ConsumerState<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? expenseDate;
   Category _selectedCategory = Category.food;
 
-  void _showDatePickerscreen() async {
+  void _showDatePickerScreen() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 1, now.month, now.day);
-    final DateTime? datePicked = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       firstDate: firstDate,
       lastDate: now,
       initialDate: now,
-    ); // await waits for the date picker to give value the stored into 'datePicked'
-    //then the value used right after the next line
+    );
     setState(() {
-      expenseDate = datePicked;
+      expenseDate = pickedDate;
     });
+  }
+
+  void _submitExpenseForm() {
+    final enteredAmount = int.tryParse(_amountController.text);
+    final invalidAmount = enteredAmount == null || enteredAmount <= 0;
+
+    if (_titleController.text.trim().isEmpty ||
+        invalidAmount ||
+        expenseDate == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Invalid Input'),
+          content: const Text('Ebu angalia kama umeandika vizuri'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Okay'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    //submitting the expense
+    ref
+        .read(expenseListProvider.notifier)
+        .addExpense(
+          Expense(
+            title: _titleController.text,
+            amount: enteredAmount,
+            date: expenseDate!,
+            category: _selectedCategory,
+          ),
+        );
+    Navigator.pop(context);
+  }
+
+  Widget _buildDatePickerRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          expenseDate == null
+              ? 'No date selected'
+              : formatter.format(expenseDate!),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(width: 5),
+        IconButton(
+          icon: const Icon(Icons.calendar_month_outlined),
+          onPressed: _showDatePickerScreen,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return DropdownButton(
+      value: _selectedCategory,
+      items: Category.values.map((category) {
+        return DropdownMenuItem(
+          value: category,
+          child: Text(category.name.toUpperCase()),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value == null) return;
+        setState(() {
+          _selectedCategory = value;
+        });
+      },
+    );
   }
 
   @override
@@ -45,154 +113,105 @@ class _NewExpenseState extends State<NewExpense> {
     super.dispose();
   }
 
-  void _submitExpenseForm() {
-    final enteredAmount = int.tryParse(_amountController.text); //n
-    final amountIsInvalid =
-        enteredAmount == null || enteredAmount <= 0;
-
-    if (_titleController.text.trim().isEmpty ||
-        amountIsInvalid ||
-        expenseDate == null) {
-      //show error message
-      showDialog(
-        context: context,
-        builder: (ctx) {
-          return AlertDialog(
-            title: Text(
-              'Invalid Input',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            content: Text(
-              'Ebu angalia kama umeandika vizuri',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Okay'),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
-    widget.onAddExpense(
-      Expense(
-        title: _titleController.text,
-        amount: enteredAmount,
-        date: expenseDate!,
-        category: _selectedCategory,
-      ),
-    );
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 32, 18, 13),
-      child: Column(
-        //mainAxisSize: MainAxisSize.min,
-        children: [
-          // Title text field
-          TextField(
-            controller: _titleController,
-            maxLength: 50,
-            keyboardType: TextInputType.text,
-            decoration: const InputDecoration(
-              labelText: 'Expense Title',
-            ),
-          ),
+    final keyboardSpace = MediaQuery.of(context).viewInsets.bottom;
 
-          const SizedBox(height: 10),
-
-          // Amount + Date row
-          Row(
-            children: [
-              // Amount text field
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  controller: _amountController,
-                  decoration: const InputDecoration(
-                    prefixText: 'KES ',
-                    labelText: 'Amount',
+    return LayoutBuilder(
+      builder: (ctx, constraints) {
+        final isWide = constraints.maxWidth >= 600;
+        return SizedBox(
+          height: double.infinity,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(18, 32, 18, keyboardSpace + 13),
+            child: Column(
+              children: [
+                if (isWide)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _titleController,
+                          maxLength: 50,
+                          decoration: const InputDecoration(
+                            labelText: 'Expense Title',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            prefixText: 'KES ',
+                            labelText: 'Amount',
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  TextField(
+                    controller: _titleController,
+                    maxLength: 50,
+                    decoration: const InputDecoration(
+                      labelText: 'Expense Title',
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(width: 20),
+                const SizedBox(height: 10),
 
-              // Date Row
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                //row 2
+                if (isWide)
+                  Row(
+                    children: [
+                      _buildCategoryDropdown(),
+                      const Spacer(),
+                      Expanded(child: _buildDatePickerRow()),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            prefixText: 'KES ',
+                            labelText: 'Amount',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(child: _buildDatePickerRow()),
+                    ],
+                  ),
+
+                const SizedBox(height: 10),
+
+                //row 3 (buttons)
+                Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      expenseDate == null
-                          ? 'No date selected'
-                          : formatter.format(expenseDate!),
-                      style: Theme.of(context).textTheme.titleSmall,
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 5),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_month_outlined),
-                      onPressed: _showDatePickerscreen,
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _submitExpenseForm,
+                      child: const Text('Add expense'),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-
-          const SizedBox(height: 10),
-
-          // Buttons row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              //dropdown
-              DropdownButton(
-                value: _selectedCategory,
-                items: Category.values.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category.name.toUpperCase()),
-                  );
-                }).toList(),
-                //this method executed when user selects a menu item
-                //the selected item is assigned to 'value'
-                onChanged: (selectedvalue) {
-                  if (selectedvalue == null) {
-                    return;
-                  }
-                  setState(() {
-                    _selectedCategory = selectedvalue;
-                  });
-                },
-              ),
-
-              const Spacer(),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Cancel'),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: _submitExpenseForm,
-                child: const Text('Add expense'),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
