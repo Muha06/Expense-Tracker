@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/legacy.dart';
 
-final isDarkThemeProvider = StateProvider((ref) {
+final isDarkModeProvider = StateProvider<bool>((ref) {
   return false;
 });

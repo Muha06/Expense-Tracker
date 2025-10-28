@@ -1,11 +1,12 @@
-
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:toggle_switch/toggle_switch.dart';
 
 class Expenses extends ConsumerStatefulWidget {
   const Expenses({super.key});
@@ -50,6 +51,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkmode = ref.watch(isDarkModeProvider);
     final allExpenses = ref.read(expenseListProvider);
 
     final width = MediaQuery.of(context).size.width;
@@ -72,11 +74,33 @@ class _ExpensesState extends ConsumerState<Expenses> {
       appBar: AppBar(
         title: const Text('Expense Tracker'),
         actions: [
-          IconButton(
-            onPressed: _showExpenseOverlay,
-            icon: const Icon(Icons.add),
+          ToggleSwitch(
+            minWidth: 35.0,
+            minHeight: 30.0,
+            initialLabelIndex: isDarkmode ? 1 : 0,
+            cornerRadius: 20.0,
+            activeFgColor: Colors.white,
+            inactiveBgColor: Colors.black,
+            inactiveFgColor: Colors.white,
+            totalSwitches: 2,
+            icons: const [Icons.sunny, Icons.brightness_2_rounded],
+            iconSize: 20.0,
+            activeBgColors: [
+              [Theme.of(context).colorScheme.primary, Colors.grey],
+              [Theme.of(context).colorScheme.primary, Colors.grey],
+            ],
+            animate:
+                true, // with just animate set to true, default curve = Curves.easeIn
+            curve: Curves.bounceInOut,
+            onToggle: (idx) {
+              ref.read(isDarkModeProvider.notifier).state = idx == 1;
+            },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showExpenseOverlay,
+        child: const Icon(Icons.add),
       ),
       body: width > 600
           ? Row(

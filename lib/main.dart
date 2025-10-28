@@ -1,3 +1,4 @@
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/screens/expenses.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,11 +16,21 @@ var kdarkColorScheme = ColorScheme.fromSeed(
 );
 
 void main() {
-  runApp(
-    ProviderScope(
+  runApp(const ProviderScope(child: MyApp()));
+}
+
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final isDark = ref.watch(isDarkModeProvider);
+
+    return ProviderScope(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.light,
+        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+        //dark theme
         darkTheme: ThemeData.dark().copyWith(
           // ignore: deprecated_member_use
           colorScheme: kdarkColorScheme,
@@ -116,6 +127,6 @@ void main() {
         ),
         home: const Expenses(),
       ),
-    ),
-  );
+    );
+  }
 }
