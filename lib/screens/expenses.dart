@@ -74,27 +74,30 @@ class _ExpensesState extends ConsumerState<Expenses> {
       appBar: AppBar(
         title: const Text('Expense Tracker'),
         actions: [
-          ToggleSwitch(
-            minWidth: 35.0,
-            minHeight: 30.0,
-            initialLabelIndex: isDarkmode ? 1 : 0,
-            cornerRadius: 20.0,
-            activeFgColor: Colors.white,
-            inactiveBgColor: Colors.black,
-            inactiveFgColor: Colors.white,
-            totalSwitches: 2,
-            icons: const [Icons.sunny, Icons.brightness_2_rounded],
-            iconSize: 20.0,
-            activeBgColors: [
-              [Theme.of(context).colorScheme.primary, Colors.grey],
-              [Theme.of(context).colorScheme.primary, Colors.grey],
-            ],
-            animate:
-                true, // with just animate set to true, default curve = Curves.easeIn
-            curve: Curves.bounceInOut,
-            onToggle: (idx) {
-              ref.read(isDarkModeProvider.notifier).state = idx == 1;
-            },
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: ToggleSwitch(
+              minWidth: 35.0,
+              minHeight: 30.0,
+              initialLabelIndex: isDarkmode ? 1 : 0,
+              cornerRadius: 20.0,
+              activeFgColor: Colors.white,
+              inactiveBgColor: Colors.black,
+              inactiveFgColor: Colors.white,
+              totalSwitches: 2,
+              icons: const [Icons.sunny, Icons.brightness_2_rounded],
+              iconSize: 20.0,
+              activeBgColors: [
+                [Theme.of(context).colorScheme.primary, Colors.grey],
+                [Theme.of(context).colorScheme.primary, Colors.grey],
+              ],
+              animate:
+                  true, // with just animate set to true, default curve = Curves.easeIn
+              curve: Curves.bounceInOut,
+              onToggle: (idx) {
+                ref.read(isDarkModeProvider.notifier).state = idx == 1;
+              },
+            ),
           ),
         ],
       ),
