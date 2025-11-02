@@ -18,7 +18,7 @@ class Chart extends ConsumerStatefulWidget {
 class _ChartState extends ConsumerState<Chart> {
   List<Expense> allExpenses = [];
   void getAllExpenses() {
-    final expenses = ref.read(expenseListProvider);
+    final expenses = ref.watch(expenseListProvider);
     allExpenses = expenses;
   }
 

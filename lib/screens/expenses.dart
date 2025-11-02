@@ -31,9 +31,10 @@ class _ExpensesState extends ConsumerState<Expenses> {
   }
 
   void deleteExpense(Expense expense) {
-    //find expene index
+    //INCASE OF UNDO:
+    //find expense index
     final expenseIndex = ref.read(expenseListProvider).indexOf(expense);
-    //remove
+    //delete expense
     ref.read(expenseListProvider.notifier).deleteExpense(expense);
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -81,6 +82,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
           );
     }
   }
+
   //load the expenses list when app starts
   @override
   void initState() {

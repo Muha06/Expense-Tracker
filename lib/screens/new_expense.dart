@@ -21,6 +21,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
   final _amountController = TextEditingController();
   DateTime? expenseDate;
   Category _selectedCategory = Category.food;
+  var isAdding = false;
 
   void _showDatePickerScreen() async {
     final now = DateTime.now();
@@ -71,6 +72,10 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
         'expenses.json',
       );
       //
+      setState(() {
+        isAdding = true;
+      });
+
       //http post
       final response = await http.post(
         url,
@@ -240,13 +245,25 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
                   children: [
                     _buildCategoryDropdown(),
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: isAdding
+                          ? null
+                          : () {
+                              Navigator.pop(context);
+                            },
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: _submitExpenseForm,
-                      child: const Text('Add expense'),
+                      child: isAdding
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Add expense'),
                     ),
                   ],
                 ),
