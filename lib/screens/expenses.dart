@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
@@ -92,6 +93,8 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
   @override
   Widget build(BuildContext context) {
+    final SearchController = TextEditingController();
+
     final isDarkmode = ref.watch(isDarkModeProvider);
     final allExpenses = ref.read(expenseListProvider);
 
@@ -155,6 +158,26 @@ class _ExpensesState extends ConsumerState<Expenses> {
             )
           : Column(
               children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    height: 50,
+                    width: double.infinity,
+                    child: TextField(
+                      controller: SearchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      ),
+                      keyboardType: TextInputType.text,
+                      onChanged: (value) {
+                        ref.read(searchProvider.notifier).state = value;
+                      },
+                    ),
+                  ),
+                ),
                 Chart(expenses: allExpenses),
                 Expanded(child: mainContent),
               ],

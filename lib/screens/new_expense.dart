@@ -252,7 +252,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
                             },
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 10),
+                    const Expanded(child: SizedBox()),
                     ElevatedButton(
                       onPressed: _submitExpenseForm,
                       child: isAdding

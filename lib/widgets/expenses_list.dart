@@ -1,4 +1,5 @@
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/expense_item.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,14 @@ class ExpensesList extends ConsumerWidget {
     final allExpenses = ref.watch(expenseListProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
+    final searchTerm = ref.watch(searchProvider).toLowerCase();
+
+    final filteredList = allExpenses.where((expense) {
+      return expense.title.replaceAll(' ', '').contains(searchTerm);
+    }).toList();
+
     return ListView.builder(
-      itemCount: allExpenses.length,
+      itemCount: filteredList.length,
       //styling the individual item
       itemBuilder: (ctx, idx) => Dismissible(
         background: Container(
@@ -42,12 +49,12 @@ class ExpensesList extends ConsumerWidget {
             ],
           ),
         ),
-        key: ValueKey(allExpenses[idx]),
+        key: ValueKey(filteredList[idx]),
         onDismissed: (direction) {
-          onDeleteExpense(allExpenses[idx]);
+          onDeleteExpense(filteredList[idx]);
         },
         //widget shown for each dissmissible
-        child: ExpenseItem(expense: allExpenses[idx]),
+        child: ExpenseItem(expense: filteredList[idx]),
       ),
     );
   }
