@@ -65,36 +65,51 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       return;
     }
     //submitting the expense
+    try {
+      final url = Uri.https(
+        'expense-tracker-32102-default-rtdb.firebaseio.com',
+        'expenses.json',
+      );
+      //
+      //http post
+      final response = await http.post(
+        url,
+        headers: {'content-type': 'application/json'},
+        body: json.encode({
+          'title': _titleController.text,
+          'amount': enteredAmount,
+          'category': _selectedCategory.name,
+          'date': expenseDate!.millisecondsSinceEpoch,
+        }),
+      );
+      if (response.statusCode >= 400) {
+        throw Exception('An error occured!');
+      }
+      ref
+          .read(expenseListProvider.notifier)
+          .addExpense(
+            Expense(
+              title: _titleController.text,
+              amount: enteredAmount,
+              date: expenseDate!,
+              category: _selectedCategory,
+            ),
+          );
 
-    //http url
-    final url = Uri.https(
-      'expense-tracker-32102-default-rtdb.firebaseio.com',
-      'expenses.json',
-    );
-    //
-    //http post
-    final response = await http.post(
-      url,
-      headers: {'content-type': 'application/json'},
-      body: json.encode({
-        'title': _titleController.text,
-        'amount': enteredAmount,
-        'category': _selectedCategory.name,
-        'date': expenseDate!.millisecondsSinceEpoch,
-      }),
-    );
-    ref
-        .read(expenseListProvider.notifier)
-        .addExpense(
-          Expense(
-            title: _titleController.text,
-            amount: enteredAmount,
-            date: expenseDate!,
-            category: _selectedCategory,
+      Navigator.pop(context);
+    } catch (e) {
+      debugPrint('Error adding expense:  $e');
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => const AlertDialog(
+            title: Text('Error'),
+            content: Text('An error ocurred!'),
           ),
         );
-
-    Navigator.pop(context);
+      }
+    }
+    //http url
   }
 
   Widget _buildDatePickerRow() {
@@ -223,7 +238,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    const Spacer(),
+                    _buildCategoryDropdown(),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),

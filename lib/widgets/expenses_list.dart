@@ -1,4 +1,5 @@
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/expense_item.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
@@ -17,24 +18,32 @@ class ExpensesList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allExpenses = ref.watch(expenseListProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     return ListView.builder(
       itemCount: allExpenses.length,
       //styling the individual item
       itemBuilder: (ctx, idx) => Dismissible(
         background: Container(
-          color: Theme.of(context).colorScheme.error.withValues(alpha: 0.75),
-          margin: EdgeInsets.symmetric(
-            horizontal: Theme.of(context).cardTheme.margin!.horizontal,
+          width: 80,
+          color: isDarkMode
+              ? Theme.of(context).colorScheme.error
+              : Theme.of(context).colorScheme.error.withValues(alpha: 0.75),
+          // margin: EdgeInsets.symmetric(
+          //   horizontal: Theme.of(context).cardTheme.margin!.horizontal,
+          // ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Icon(Icons.delete, color: Colors.white),
+              ),
+            ],
           ),
         ),
-        //key: asks which item?
-        //it uniquely identifies which item was dismissed
         key: ValueKey(allExpenses[idx]),
-        //onDismissed wants a callback that will run after dsimissing the widget
         onDismissed: (direction) {
-          //onDeleteExpense is the mthd, defined in expenses.dart
-          //removes the item from the list.
           onDeleteExpense(allExpenses[idx]);
         },
         //widget shown for each dissmissible

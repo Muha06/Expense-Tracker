@@ -62,11 +62,13 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final Map<String, dynamic> expenseData = json.decode(response.body);
 
     for (final exp in expenseData.entries) {
+      //convert int time to type dateTime
       final int timeStamp = exp.value['date'];
       DateTime date = DateTime.fromMillisecondsSinceEpoch(timeStamp);
       final category = Category.values.firstWhere((c) {
         return c.name == exp.value['category'];
       });
+      //add the new expense to the state
       ref
           .read(expenseListProvider.notifier)
           .addExpense(
@@ -79,7 +81,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
           );
     }
   }
-
+  //load the expenses list when app starts
   @override
   void initState() {
     loadItems();

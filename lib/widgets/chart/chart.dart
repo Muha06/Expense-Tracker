@@ -1,27 +1,39 @@
+import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:flutter/material.dart';
 
 import 'package:expense_tracker/widgets/chart/chart_bar.dart';
 import 'package:expense_tracker/models/expense.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Chart extends StatelessWidget {
+class Chart extends ConsumerStatefulWidget {
   const Chart({super.key, required this.expenses});
 
   //chart class requres a list of expenses
   final List<Expense> expenses;
 
+  @override
+  ConsumerState<Chart> createState() => _ChartState();
+}
+
+class _ChartState extends ConsumerState<Chart> {
+  List<Expense> allExpenses = [];
+  void getAllExpenses() {
+    final expenses = ref.read(expenseListProvider);
+    allExpenses = expenses;
+  }
+
   //a method that returns a list of buckets per category using the named constr
   List<ExpenseBucket> get buckets {
     return [
       // 4 diff category bar
-      ExpenseBucket.forCategory(expenses, Category.food),
-      ExpenseBucket.forCategory(expenses, Category.leisure),
-      ExpenseBucket.forCategory(expenses, Category.transport),
-      ExpenseBucket.forCategory(expenses, Category.airtime),
+      ExpenseBucket.forCategory(allExpenses, Category.food),
+      ExpenseBucket.forCategory(allExpenses, Category.leisure),
+      ExpenseBucket.forCategory(allExpenses, Category.transport),
+      ExpenseBucket.forCategory(allExpenses, Category.airtime),
     ];
   }
 
   //get maxtotalexpense recorded in all categories,
-  //by looping through every bucket(category) and finding one with highest amt
   int get maxTotalExpense {
     int maxTotalExpense = 0;
 
@@ -35,15 +47,14 @@ class Chart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    getAllExpenses();
+
     //checks if darkmode
     final isDarkMode =
         MediaQuery.of(context).platformBrightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(
-        vertical: 16,
-        horizontal: 8,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       width: double.infinity,
       height: 180,
       decoration: BoxDecoration(
@@ -65,7 +76,7 @@ class Chart extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 //creates a chartBar widget for each bucket
-                for (final bucket in buckets) // alternative to map()
+                for (final bucket in buckets)
                   ChartBar(
                     //fill:
                     fill: bucket.totalAmount == 0
@@ -82,9 +93,7 @@ class Chart extends StatelessWidget {
                 .map(
                   (bucket) => Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
                         categoryIcons[bucket.category],
                         color: isDarkMode
