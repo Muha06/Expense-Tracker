@@ -1,12 +1,15 @@
+import 'dart:convert';
+
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
-import 'package:expense_tracker/widgets/new_expense.dart';
+import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toggle_switch/toggle_switch.dart';
+import 'package:http/http.dart' as http;
 
 class Expenses extends ConsumerStatefulWidget {
   const Expenses({super.key});
@@ -47,6 +50,40 @@ class _ExpensesState extends ConsumerState<Expenses> {
         ),
       ),
     );
+  }
+
+  void loadItems() async {
+    //http url
+    final url = Uri.https(
+      'expense-tracker-32102-default-rtdb.firebaseio.com',
+      'expenses.json',
+    );
+    final response = await http.get(url);
+    final Map<String, dynamic> expenseData = json.decode(response.body);
+
+    for (final exp in expenseData.entries) {
+      final int timeStamp = exp.value['date'];
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(timeStamp);
+      final category = Category.values.firstWhere((c) {
+        return c.name == exp.value['category'];
+      });
+      ref
+          .read(expenseListProvider.notifier)
+          .addExpense(
+            Expense(
+              title: exp.value['title'],
+              amount: exp.value['amount'],
+              date: date,
+              category: category,
+            ),
+          );
+    }
+  }
+
+  @override
+  void initState() {
+    loadItems();
+    super.initState();
   }
 
   @override

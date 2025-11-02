@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 final formatter = DateFormat.yMd();
 
@@ -33,7 +36,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
     });
   }
 
-  void _submitExpenseForm() {
+  void _submitExpenseForm() async {
     final enteredAmount = int.tryParse(_amountController.text);
     final invalidAmount = enteredAmount == null || enteredAmount <= 0;
 
@@ -43,8 +46,14 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Invalid Input'),
-          content: const Text('Ebu angalia kama umeandika vizuri'),
+          title: Text(
+            'Invalid Input',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+          content: Text(
+            'Please confirm if you filled in correctly',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
@@ -56,6 +65,24 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       return;
     }
     //submitting the expense
+
+    //http url
+    final url = Uri.https(
+      'expense-tracker-32102-default-rtdb.firebaseio.com',
+      'expenses.json',
+    );
+    //
+    //http post
+    final response = await http.post(
+      url,
+      headers: {'content-type': 'application/json'},
+      body: json.encode({
+        'title': _titleController.text,
+        'amount': enteredAmount,
+        'category': _selectedCategory.name,
+        'date': expenseDate!.millisecondsSinceEpoch,
+      }),
+    );
     ref
         .read(expenseListProvider.notifier)
         .addExpense(
@@ -66,6 +93,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
             category: _selectedCategory,
           ),
         );
+
     Navigator.pop(context);
   }
 
