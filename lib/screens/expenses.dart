@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
-import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
+import 'package:expense_tracker/widgets/drawer.dart';
+import 'package:expense_tracker/widgets/toggle_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:toggle_switch/toggle_switch.dart';
 import 'package:http/http.dart' as http;
 
 class Expenses extends ConsumerStatefulWidget {
@@ -93,10 +93,9 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
   @override
   Widget build(BuildContext context) {
-    final SearchController = TextEditingController();
+    final searchController = TextEditingController();
 
-    final isDarkmode = ref.watch(isDarkModeProvider);
-    final allExpenses = ref.read(expenseListProvider);
+    final allExpenses = ref.watch(expenseListProvider);
 
     final width = MediaQuery.of(context).size.width;
 
@@ -106,82 +105,88 @@ class _ExpensesState extends ConsumerState<Expenses> {
         style: Theme.of(context).textTheme.titleSmall,
       ),
     );
-    if (allExpenses.isEmpty) {
-      mainContent;
-    } else {
+
+    if (allExpenses.isNotEmpty) {
       mainContent = Expanded(
         child: ExpensesList(onDeleteExpense: deleteExpense),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expense Tracker'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: ToggleSwitch(
-              minWidth: 35.0,
-              minHeight: 30.0,
-              initialLabelIndex: isDarkmode ? 1 : 0,
-              cornerRadius: 20.0,
-              activeFgColor: Colors.white,
-              inactiveBgColor: Colors.black,
-              inactiveFgColor: Colors.white,
-              totalSwitches: 2,
-              icons: const [Icons.sunny, Icons.brightness_2_rounded],
-              iconSize: 20.0,
-              activeBgColors: [
-                [Theme.of(context).colorScheme.primary, Colors.grey],
-                [Theme.of(context).colorScheme.primary, Colors.grey],
-              ],
-              animate:
-                  true, // with just animate set to true, default curve = Curves.easeIn
-              curve: Curves.bounceInOut,
-              onToggle: (idx) {
-                ref.read(isDarkModeProvider.notifier).state = idx == 1;
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showExpenseOverlay,
-        child: const Icon(Icons.add),
-      ),
-      body: width > 600
-          ? Row(
-              children: [
-                Expanded(flex: 1, child: Chart(expenses: allExpenses)),
-                Expanded(flex: 2, child: mainContent),
-              ],
-            )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    height: 50,
-                    width: double.infinity,
-                    child: TextField(
-                      controller: SearchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50),
+    return SafeArea(
+      child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showExpenseOverlay,
+          child: const Icon(Icons.add),
+        ),
+        drawer: const MyDrawer(),
+        body: width > 600
+            ? Row(
+                children: [
+                  Expanded(flex: 1, child: Chart(expenses: allExpenses)),
+                  Expanded(flex: 2, child: mainContent),
+                ],
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 16,
+                      bottom: 8,
+                      left: 16,
+                      right: 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        //drawer icon
+                        Builder(
+                          builder: (context) => GestureDetector(
+                            onTap: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                            child: const Icon(Icons.menu_rounded, size: 32),
+                          ),
                         ),
-                      ),
-                      keyboardType: TextInputType.text,
-                      onChanged: (value) {
-                        ref.read(searchProvider.notifier).state = value;
-                      },
+
+                        //title
+                        Text(
+                          'ExpenseTrak',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge!.copyWith(fontSize: 24),
+                        ),
+
+                        //theme toggle switch
+                        const ThemeToggleSwitch(),
+                      ],
                     ),
                   ),
-                ),
-                Chart(expenses: allExpenses),
-                Expanded(child: mainContent),
-              ],
-            ),
+
+                  //search textfield
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      height: 50,
+                      width: double.infinity,
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        keyboardType: TextInputType.text,
+                        onChanged: (value) {
+                          ref.read(searchProvider.notifier).state = value;
+                        },
+                      ),
+                    ),
+                  ),
+                  Expanded(child: mainContent),
+                ],
+              ),
+      ),
     );
   }
 }

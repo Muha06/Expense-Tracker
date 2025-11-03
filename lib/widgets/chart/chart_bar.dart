@@ -1,16 +1,18 @@
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 //individual bar styling
-class ChartBar extends StatelessWidget {
+class ChartBar extends ConsumerWidget {
   const ChartBar({super.key, required this.fill});
 
   //fill: how tall the fill color should be for each bar depending on expense amount
   final double fill;
 
   @override
-  Widget build(BuildContext context) {
-    final isDarkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+  Widget build(BuildContext context, ref) {
+    final isDarkMode = ref.watch(isDarkModeProvider);
+    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5),

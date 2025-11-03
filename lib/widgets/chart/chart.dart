@@ -1,4 +1,5 @@
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:flutter/material.dart';
 
 import 'package:expense_tracker/widgets/chart/chart_bar.dart';
@@ -50,8 +51,8 @@ class _ChartState extends ConsumerState<Chart> {
     getAllExpenses();
 
     //checks if darkmode
-    final isDarkMode =
-        MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
