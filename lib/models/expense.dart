@@ -16,11 +16,12 @@ const categoryIcons = {
 
 class Expense {
   Expense({
+    required this.id,
     required this.title,
     required this.amount,
     required this.date,
     required this.category,
-  }) : id = uuid.v4();
+  });
 
   //properties
   final String id;
@@ -34,10 +35,7 @@ class Expense {
 }
 
 class ExpenseBucket {
-  const ExpenseBucket({
-    required this.category,
-    required this.expenses,
-  });
+  const ExpenseBucket({required this.category, required this.expenses});
   //properties
   final Category category;
   final List<Expense> expenses;

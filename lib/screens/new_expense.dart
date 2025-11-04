@@ -65,6 +65,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       );
       return;
     }
+
     //submitting the expense
     try {
       final url = Uri.https(
@@ -90,10 +91,13 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       if (response.statusCode >= 400) {
         throw Exception('An error occured!');
       }
+      //decode firebase generated id
+      final firebaseKey = json.decode(response.body)['name'];
       ref
           .read(expenseListProvider.notifier)
           .addExpense(
             Expense(
+              id: firebaseKey,
               title: _titleController.text,
               amount: enteredAmount,
               date: expenseDate!,
@@ -102,6 +106,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
           );
 
       Navigator.pop(context);
+      
     } catch (e) {
       debugPrint('Error adding expense:  $e');
       if (mounted) {

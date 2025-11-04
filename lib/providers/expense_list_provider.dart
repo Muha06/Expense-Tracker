@@ -13,6 +13,8 @@ class ExpenseListNotifier extends StateNotifier<List<Expense>> {
     state = state.where((e) {
       return e != expense;
     }).toList();
+    
+    
   }
 
   void insertExpense(Expense expense, int index) {

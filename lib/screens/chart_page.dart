@@ -15,6 +15,16 @@ class _ChartPageState extends ConsumerState<ChartPage> {
   Widget build(BuildContext context) {
     final allExpenses = ref.watch(expenseListProvider);
 
-    return Scaffold(body: Chart(expenses: allExpenses));
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Your Expenses stats'),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          
+        ),
+        body: Chart(expenses: allExpenses),
+      ),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
@@ -20,6 +21,9 @@ class Expenses extends ConsumerStatefulWidget {
 }
 
 class _ExpensesState extends ConsumerState<Expenses> {
+  bool isLoading = false;
+  final searchController = TextEditingController();
+
   void _showExpenseOverlay() {
     showModalBottomSheet(
       context: context,
@@ -31,12 +35,36 @@ class _ExpensesState extends ConsumerState<Expenses> {
     );
   }
 
-  void deleteExpense(Expense expense) {
-    //INCASE OF UNDO:
-    //find expense index
+  void deleteExpense(Expense expense) async {
     final expenseIndex = ref.read(expenseListProvider).indexOf(expense);
-    //delete expense
     ref.read(expenseListProvider.notifier).deleteExpense(expense);
+
+    //delete in db
+    final url = Uri.https(
+      'expenses-tracker-32102-default-rtdb.firebaseio.com',
+      'expenses/${expense.id}.json',
+    );
+
+    final response = await http.delete(url);
+
+    print(response.statusCode);
+    print(expense.id);
+
+    if (response.statusCode >= 400) {
+      ref
+          .read(expenseListProvider.notifier)
+          .insertExpense(expense, expenseIndex);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something Unexpected happened!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    //delete locally
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -44,10 +72,29 @@ class _ExpensesState extends ConsumerState<Expenses> {
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Undo',
-          onPressed: () {
+          //undo logic locally & in db
+          onPressed: () async {
             ref
                 .read(expenseListProvider.notifier)
                 .insertExpense(expense, expenseIndex);
+            //undo in the db
+            try {
+              await http.put(
+                url,
+                body: json.encode({
+                  'title': expense.title,
+                  'amount': expense.amount,
+                  'date': expense.date.millisecondsSinceEpoch,
+                  'category': expense.category.name,
+                }),
+              );
+            } catch (_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to restore expense in DB'),
+                ),
+              );
+            }
           },
         ),
       ),
@@ -55,33 +102,44 @@ class _ExpensesState extends ConsumerState<Expenses> {
   }
 
   void loadItems() async {
-    //http url
     final url = Uri.https(
       'expense-tracker-32102-default-rtdb.firebaseio.com',
       'expenses.json',
     );
-    final response = await http.get(url);
-    final Map<String, dynamic> expenseData = json.decode(response.body);
 
-    for (final exp in expenseData.entries) {
-      //convert int time to type dateTime
-      final int timeStamp = exp.value['date'];
-      DateTime date = DateTime.fromMillisecondsSinceEpoch(timeStamp);
-      final category = Category.values.firstWhere((c) {
-        return c.name == exp.value['category'];
-      });
-      //add the new expense to the state
-      ref
-          .read(expenseListProvider.notifier)
-          .addExpense(
-            Expense(
-              title: exp.value['title'],
-              amount: exp.value['amount'],
-              date: date,
-              category: category,
-            ),
-          );
+    setState(() {
+      isLoading = true;
+    });
+
+    final response = await http.get(url);
+    final Map<String, dynamic>? expenseData = json.decode(response.body);
+
+    if (expenseData != null) {
+      for (final exp in expenseData.entries) {
+        final int timeStamp = exp.value['date'];
+        DateTime date = DateTime.fromMillisecondsSinceEpoch(timeStamp);
+        final category = Category.values.firstWhere((c) {
+          return c.name == exp.value['category'];
+        });
+
+        ref
+            .read(expenseListProvider.notifier)
+            .addExpense(
+              Expense(
+                id: exp.key,
+                title: exp.value['title'],
+                amount: exp.value['amount'],
+                date: date,
+                category: category,
+              ),
+            );
+      }
     }
+
+    // always stop loading, even if DB was empty
+    setState(() {
+      isLoading = false;
+    });
   }
 
   //load the expenses list when app starts
@@ -89,28 +147,32 @@ class _ExpensesState extends ConsumerState<Expenses> {
   void initState() {
     loadItems();
     super.initState();
+    //unfocus keyboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).unfocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchController = TextEditingController();
+    final width = MediaQuery.of(context).size.width;
 
     final allExpenses = ref.watch(expenseListProvider);
 
-    final width = MediaQuery.of(context).size.width;
-
-    Widget mainContent = Center(
-      child: Text(
-        'No expenses added',
-        style: Theme.of(context).textTheme.titleSmall,
-      ),
-    );
-
-    if (allExpenses.isNotEmpty) {
-      mainContent = Expanded(
-        child: ExpensesList(onDeleteExpense: deleteExpense),
-      );
-    }
+    Widget mainContent = allExpenses.isEmpty
+        ? Center(
+            child: Text(
+              'No expenses added',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+          )
+        : ExpensesList(onDeleteExpense: deleteExpense);
 
     return SafeArea(
       child: Scaffold(
@@ -161,29 +223,40 @@ class _ExpensesState extends ConsumerState<Expenses> {
                       ],
                     ),
                   ),
+                  //total amount card
 
                   //search textfield
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
                     child: SizedBox(
-                      height: 50,
+                      height: 52,
                       width: double.infinity,
                       child: TextField(
                         controller: searchController,
                         decoration: InputDecoration(
                           hintText: 'Search...',
+                          hintStyle: Theme.of(context).textTheme.bodyLarge!,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
                         keyboardType: TextInputType.text,
                         onChanged: (value) {
-                          ref.read(searchProvider.notifier).state = value;
+                          ref.read(searchProvider.notifier).state = value
+                              .trim()
+                              .toLowerCase();
                         },
                       ),
                     ),
                   ),
-                  Expanded(child: mainContent),
+                  Expanded(
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : mainContent,
+                  ),
                 ],
               ),
       ),
