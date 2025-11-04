@@ -1,7 +1,7 @@
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
-import 'package:expense_tracker/widgets/expense_item.dart';
+import 'package:expense_tracker/widgets/exp_item.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -54,7 +54,7 @@ class ExpensesList extends ConsumerWidget {
           onDeleteExpense(filteredList[idx]);
         },
         //widget shown for each dissmissible
-        child: ExpenseItem(expense: filteredList[idx]),
+        child: ExpItem(expense: filteredList[idx]),
       ),
     );
   }

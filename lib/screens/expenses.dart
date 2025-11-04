@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
+import 'package:expense_tracker/widgets/amount_card.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:expense_tracker/widgets/drawer.dart';
@@ -41,14 +43,11 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
     //delete in db
     final url = Uri.https(
-      'expenses-tracker-32102-default-rtdb.firebaseio.com',
+      'expense-tracker-32102-default-rtdb.firebaseio.com',
       'expenses/${expense.id}.json',
     );
 
     final response = await http.delete(url);
-
-    print(response.statusCode);
-    print(expense.id);
 
     if (response.statusCode >= 400) {
       ref
@@ -164,6 +163,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final width = MediaQuery.of(context).size.width;
 
     final allExpenses = ref.watch(expenseListProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     Widget mainContent = allExpenses.isEmpty
         ? Center(
@@ -177,88 +177,132 @@ class _ExpensesState extends ConsumerState<Expenses> {
     return SafeArea(
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
+          backgroundColor: isDarkMode ? Colors.white : Colors.black,
+
+          foregroundColor: isDarkMode ? Colors.black : Colors.white,
           onPressed: _showExpenseOverlay,
           child: const Icon(Icons.add),
         ),
+
         drawer: const MyDrawer(),
-        body: width > 600
-            ? Row(
-                children: [
-                  Expanded(flex: 1, child: Chart(expenses: allExpenses)),
-                  Expanded(flex: 2, child: mainContent),
-                ],
-              )
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 16,
-                      bottom: 8,
-                      left: 16,
-                      right: 16,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        //drawer icon
-                        Builder(
-                          builder: (context) => GestureDetector(
-                            onTap: () {
-                              Scaffold.of(context).openDrawer();
-                            },
-                            child: const Icon(Icons.menu_rounded, size: 32),
-                          ),
-                        ),
 
-                        //title
-                        Text(
-                          'ExpenseTrak',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge!.copyWith(fontSize: 24),
-                        ),
-
-                        //theme toggle switch
-                        const ThemeToggleSwitch(),
-                      ],
-                    ),
+        body: Container(
+          decoration: isDarkMode
+              ? const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    colors: [
+                      Color.fromARGB(255, 74, 2, 105),
+                      Color.fromARGB(136, 17, 1, 27),
+                    ],
                   ),
-                  //total amount card
-
-                  //search textfield
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 16,
-                    ),
-                    child: SizedBox(
-                      height: 52,
-                      width: double.infinity,
-                      child: TextField(
-                        controller: searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Search...',
-                          hintStyle: Theme.of(context).textTheme.bodyLarge!,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
+                )
+              : null,
+          child: width > 600
+              ? Row(
+                  children: [
+                    Expanded(flex: 1, child: Chart(expenses: allExpenses)),
+                    Expanded(flex: 2, child: mainContent),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 32,
+                        bottom: 16,
+                        left: 32,
+                        right: 24,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          //drawer icon
+                          Builder(
+                            builder: (context) => GestureDetector(
+                              onTap: () {
+                                Scaffold.of(context).openDrawer();
+                              },
+                              child: const Icon(Icons.menu_rounded, size: 32),
+                            ),
                           ),
-                        ),
-                        keyboardType: TextInputType.text,
-                        onChanged: (value) {
-                          ref.read(searchProvider.notifier).state = value
-                              .trim()
-                              .toLowerCase();
-                        },
+
+                          //title
+                          Text(
+                            'ExpenseTrak',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge!.copyWith(fontSize: 24),
+                          ),
+
+                          //theme toggle switch
+                          const ThemeToggleSwitch(),
+                        ],
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : mainContent,
-                  ),
-                ],
-              ),
+                    //total amount card
+
+                    //search textfield
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 16,
+                      ),
+                      child: SizedBox(
+                        height: 52,
+                        width: double.infinity,
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search...',
+                            hintStyle: Theme.of(context).textTheme.bodyLarge!,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          keyboardType: TextInputType.text,
+                          onChanged: (value) {
+                            ref.read(searchProvider.notifier).state = value
+                                .trim()
+                                .toLowerCase();
+                          },
+                        ),
+                      ),
+                    ),
+                    //amount card
+
+                    //below searchbar
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const MyAmountCard(),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 24,
+                                top: 8,
+                                bottom: 16,
+                              ),
+                              child: Text(
+                                'All Expenses',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.titleLarge!.copyWith(fontSize: 16),
+                              ),
+                            ),
+                          ),
+
+                          isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              //maincontent => the list of expenses
+                              : Expanded(child: mainContent),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }

@@ -32,7 +32,6 @@ class MyApp extends ConsumerWidget {
         themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
         //dark theme
         darkTheme: ThemeData.dark().copyWith(
-          // ignore: deprecated_member_use
           colorScheme: kdarkColorScheme,
           appBarTheme: const AppBarTheme().copyWith(
             backgroundColor: kdarkColorScheme.onPrimary,

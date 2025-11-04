@@ -11,27 +11,16 @@ class MyDrawer extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Drawer(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 700),
-        builder: (context, value, child) {
-          return Transform.translate(
-            offset: Offset(-50 * (1 - value), 0), // slide effect
-            child: Opacity(
-              opacity: value, // fade in
-              child: child,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onPrimaryContainer,
             ),
-          );
-        },
-        child: ListView(
-          children: [
-            //drawer header
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: isDarkMode
-                    ? Theme.of(context).colorScheme.onPrimary
-                    : Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
+            child: DrawerHeader(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -54,50 +43,39 @@ class MyDrawer extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
 
-            //content - listTiles
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(),
-                child: SizedBox(
-                  height: 60,
-                  width: double.infinity,
-                  child: ListTile(
-                    splashColor: Theme.of(context).colorScheme.primary,
-                    leading: const Icon(Icons.home_filled),
-                    onTap: () => Navigator.of(context).pop(),
-                    title: const Text('H O M E'),
-                  ),
-                ),
+          //below draweHeader
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDarkMode
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : Colors.white,
               ),
-            ),
-
-            //chart listTile
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: SizedBox(
-                  height: 50,
-                  width: double.infinity,
-                  child: ListTile(
+              child: Column(
+                spacing: 8,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.home_filled),
+                    title: const Text('H O M E'),
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.stacked_bar_chart_sharp),
                     title: const Text('C H A R T'),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) {
-                            return const ChartPage();
-                          },
-                        ),
+                        MaterialPageRoute(builder: (_) => const ChartPage()),
                       );
                     },
                   ),
-                ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
