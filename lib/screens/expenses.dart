@@ -8,6 +8,7 @@ import 'package:expense_tracker/widgets/amount_card.dart';
 import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:expense_tracker/widgets/drawer.dart';
+import 'package:expense_tracker/widgets/section_header.dart';
 import 'package:expense_tracker/widgets/toggle_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
@@ -67,7 +68,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Expense deleted'),
+        content: Text("'${expense.title}' deleted"),
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Undo',
@@ -163,14 +164,21 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final allExpenses = ref.watch(expenseListProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
-    Widget mainContent = allExpenses.isEmpty
-        ? Center(
-            child: Text(
-              'No expenses added',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          )
-        : ExpensesList(onDeleteExpense: deleteExpense);
+    final now = DateTime.now();
+    final today = allExpenses.where((exp) {
+      return exp.date.year == now.year &&
+          exp.date.month == now.month &&
+          exp.date.day == now.day;
+    }).toList();
+
+    final yesterday = allExpenses.where((exp) {
+      final y = now.subtract(const Duration(days: 1));
+      return exp.date.year == y.year &&
+          exp.date.month == y.month &&
+          exp.date.day == y.day;
+    }).toList();
+    final todayPreview = today.take(3).toList();
+    final yesterdayPreview = yesterday.take(3).toList();
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -204,10 +212,10 @@ class _ExpensesState extends ConsumerState<Expenses> {
               //first child => row for title drawer, and theme toggleswitch
               Padding(
                 padding: const EdgeInsets.only(
-                  top: 32,
+                  top: 16,
                   bottom: 16,
-                  left: 32,
-                  right: 24,
+                  left: 8,
+                  right: 8,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -237,7 +245,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
               //child 2 => search textfield
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  vertical: 10,
+                  vertical: 8,
                   horizontal: 16,
                 ),
                 child: SizedBox(
@@ -263,40 +271,32 @@ class _ExpensesState extends ConsumerState<Expenses> {
                 ),
               ),
 
-              //child 3 => column (amount card + text + List)
+              //child 3 => amount card
+              const MyAmountCard(),
+
+              //child 4 => Listview (row(text + btn) , maincontent, sctheader, list2)
               Expanded(
-                child: Column(
-                  children: [
-                    //#1
-                    const MyAmountCard(),
-                    //#2
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          left: 24,
-                          top: 8,
-                          bottom: 16,
-                        ),
-                        child: Text(
-                          'All Expenses',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge!.copyWith(fontSize: 16),
-                        ),
-                      ),
-                    ),
-                    //#3
-                    Expanded(
-                      child: isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          //maincontent => the list of expenses
-                          : Padding(
-                              padding: const EdgeInsets.only(bottom: 34),
-                              child: mainContent,
+                child: AnimatedSwitcher(
+                  duration: const Duration(seconds: 2),
+                  child: isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView(
+                          children: [
+                            //#1 padding(row(text + button) )
+                            const SectionHeader(title: 'Today'),
+
+                            //#2 => our expenses list (listview.builder)
+                            ExpensesList(
+                              expenses: todayPreview,
+                              onDeleteExpense: deleteExpense,
                             ),
-                    ),
-                  ],
+                            const SectionHeader(title: 'yesterday'),
+                            ExpensesList(
+                              expenses: yesterdayPreview,
+                              onDeleteExpense: deleteExpense,
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ],

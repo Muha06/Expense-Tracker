@@ -9,26 +9,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ExpensesList extends ConsumerWidget {
   const ExpensesList({
     super.key,
-    //required this.expenses,
+    required this.expenses,
     required this.onDeleteExpense,
   });
 
-  //final List<Expense> expenses;
+  final List<Expense> expenses;
   final void Function(Expense expense) onDeleteExpense;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allExpenses = ref.watch(expenseListProvider);
+    //final allExpenses = ref.watch(expenseListProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
-    final searchTerm = ref.watch(searchProvider).toLowerCase();
+    final searchTerm = ref
+        .watch(searchProvider)
+        .replaceAll(' ', '')
+        .toLowerCase();
 
-    final filteredList = allExpenses.where((expense) {
+    final filteredList = expenses.where((expense) {
       return expense.title.replaceAll(' ', '').contains(searchTerm);
     }).toList();
 
+    if (filteredList.isEmpty) {
+      return Center(
+        child: Text(
+          'No expenses found 🫤',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+      );
+    }
     return ListView.builder(
       itemCount: filteredList.length,
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       //styling the individual item
       itemBuilder: (ctx, idx) => Dismissible(
         direction: DismissDirection.endToStart,
