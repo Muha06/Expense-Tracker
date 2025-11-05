@@ -1,4 +1,5 @@
 import 'package:expense_tracker/providers/expense_list_provider.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/chart_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,13 +10,14 @@ class MyAmountCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final totalAmount = ref.watch(totalExpenseProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 32),
       height: 140,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.black54,
+        color: isDarkMode ? Colors.black54 : Colors.black,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
@@ -50,7 +52,9 @@ class MyAmountCard extends ConsumerWidget {
                 Text(
                   totalAmount.toString(),
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    color: isDarkMode
+                        ? Theme.of(context).colorScheme.onPrimaryContainer
+                        : Colors.white,
                     fontSize: 34,
                     fontWeight: FontWeight.bold,
                   ),

@@ -1,15 +1,16 @@
 import 'package:expense_tracker/providers/theme_toggle.dart';
-import 'package:flutter/material.dart';
 import 'package:expense_tracker/screens/expenses.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-//light mode color scheme
+// Light mode color scheme
 var kcolorScheme = ColorScheme.fromSeed(
   brightness: Brightness.light,
-  seedColor: const Color.fromARGB(255, 64, 0, 106),
+  seedColor: const Color.fromARGB(255, 39, 0, 65),
 );
 
-//dark mode color scheme
+// Dark mode color scheme
 var kdarkColorScheme = ColorScheme.fromSeed(
   brightness: Brightness.dark,
   seedColor: const Color.fromARGB(255, 39, 0, 65),
@@ -23,105 +24,131 @@ class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(isDarkModeProvider);
+    final lightTheme = ThemeData.light();
+    final darkTheme = ThemeData.dark();
 
-    return ProviderScope(
+    return AnimatedTheme(
+      data: isDark ? darkTheme : lightTheme,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-        //dark theme
-        darkTheme: ThemeData.dark().copyWith(
-          colorScheme: kdarkColorScheme,
-          appBarTheme: const AppBarTheme().copyWith(
-            backgroundColor: kdarkColorScheme.onPrimary,
-            foregroundColor: kdarkColorScheme.onPrimaryContainer,
-            titleTextStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          cardTheme: const CardThemeData().copyWith(
-            color: kdarkColorScheme.primaryContainer,
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          ),
-          bottomSheetTheme: const BottomSheetThemeData().copyWith(
-            backgroundColor: kdarkColorScheme.onPrimary,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kdarkColorScheme.primaryContainer,
-              foregroundColor: Colors.white,
-            ),
-          ),
-          textTheme: ThemeData().textTheme.copyWith(
-            titleLarge: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: kdarkColorScheme.onPrimaryContainer,
-            ),
-            titleMedium: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: Colors.white,
-            ),
-            titleSmall: const TextStyle(fontSize: 12, color: Colors.white),
-            bodyLarge: const TextStyle(color: Colors.white),
-          ),
-          inputDecorationTheme: const InputDecorationTheme().copyWith(
-            labelStyle: const TextStyle(color: Colors.white, fontSize: 14),
-          ),
-        ),
-        //light mode
-        theme: ThemeData().copyWith(
-          //every widget pulls its colors from this color scheme
+
+        // 🌞 Light Theme
+        theme: ThemeData(
           colorScheme: kcolorScheme,
-          appBarTheme: const AppBarTheme().copyWith(
+          textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme)
+              .copyWith(
+                titleLarge: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: kcolorScheme.onPrimaryContainer,
+                ),
+                titleMedium: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: kcolorScheme.onPrimaryContainer,
+                ),
+                bodyLarge: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: kcolorScheme.onPrimaryContainer,
+                ),
+                bodyMedium: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                  color: kcolorScheme.onPrimaryContainer,
+                ),
+              ),
+          appBarTheme: AppBarTheme(
             backgroundColor: kcolorScheme.primary,
             foregroundColor: kcolorScheme.onPrimary,
-            titleTextStyle: const TextStyle(
+            titleTextStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               fontSize: 20,
+              color: kcolorScheme.onPrimary,
             ),
           ),
-          cardTheme: const CardThemeData().copyWith(
+          cardTheme: CardThemeData(
             color: kcolorScheme.primaryContainer,
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          ),
-          bottomSheetTheme: const BottomSheetThemeData().copyWith(
-            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: kcolorScheme.onPrimaryContainer,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-          textTheme: ThemeData().textTheme.copyWith(
-            titleLarge: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: kcolorScheme.onPrimaryContainer,
-            ),
-            titleMedium: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: kcolorScheme.onPrimaryContainer,
-            ),
-            titleSmall: TextStyle(
-              fontSize: 12,
-              color: kcolorScheme.onPrimaryContainer,
-            ),
-            bodyLarge: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: kcolorScheme.onPrimaryContainer,
-            ),
-          ),
-          inputDecorationTheme: const InputDecorationTheme().copyWith(
-            labelStyle: TextStyle(
+          inputDecorationTheme: InputDecorationTheme(
+            labelStyle: GoogleFonts.poppins(
               color: kcolorScheme.onPrimaryContainer,
               fontSize: 14,
             ),
+          ),
+        ),
+
+        // 🌚 Dark Theme
+        darkTheme: ThemeData.dark().copyWith(
+          colorScheme: kdarkColorScheme,
+          textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme)
+              .copyWith(
+                titleLarge: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+                titleMedium: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+                bodyLarge: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+                bodyMedium: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 13,
+                  color: Colors.white,
+                ),
+              ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: kdarkColorScheme.onPrimary,
+            foregroundColor: Colors.white,
+            titleTextStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.white,
+            ),
+          ),
+          cardTheme: CardThemeData(
+            color: kdarkColorScheme.primaryContainer,
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kdarkColorScheme.primaryContainer,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         ),
         home: const Expenses(),

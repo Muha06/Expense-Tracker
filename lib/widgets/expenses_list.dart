@@ -31,6 +31,7 @@ class ExpensesList extends ConsumerWidget {
       itemCount: filteredList.length,
       //styling the individual item
       itemBuilder: (ctx, idx) => Dismissible(
+        direction: DismissDirection.endToStart,
         background: Container(
           width: 80,
           color: isDarkMode

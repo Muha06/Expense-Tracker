@@ -160,8 +160,6 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
     final allExpenses = ref.watch(expenseListProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
@@ -174,19 +172,20 @@ class _ExpensesState extends ConsumerState<Expenses> {
           )
         : ExpensesList(onDeleteExpense: deleteExpense);
 
-    return SafeArea(
-      child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: isDarkMode ? Colors.white : Colors.black,
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: isDarkMode ? Colors.white : Colors.black,
+        foregroundColor: isDarkMode ? Colors.black : Colors.white,
+        onPressed: _showExpenseOverlay,
+        child: const Icon(Icons.add),
+      ),
 
-          foregroundColor: isDarkMode ? Colors.black : Colors.white,
-          onPressed: _showExpenseOverlay,
-          child: const Icon(Icons.add),
-        ),
+      //drawer
+      drawer: const MyDrawer(),
 
-        drawer: const MyDrawer(),
-
-        body: Container(
+      //seting app bg color
+      body: SafeArea(
+        child: Container(
           decoration: isDarkMode
               ? const BoxDecoration(
                   gradient: LinearGradient(
@@ -198,110 +197,110 @@ class _ExpensesState extends ConsumerState<Expenses> {
                   ),
                 )
               : null,
-          child: width > 600
-              ? Row(
-                  children: [
-                    Expanded(flex: 1, child: Chart(expenses: allExpenses)),
-                    Expanded(flex: 2, child: mainContent),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 32,
-                        bottom: 16,
-                        left: 32,
-                        right: 24,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          //drawer icon
-                          Builder(
-                            builder: (context) => GestureDetector(
-                              onTap: () {
-                                Scaffold.of(context).openDrawer();
-                              },
-                              child: const Icon(Icons.menu_rounded, size: 32),
-                            ),
-                          ),
 
-                          //title
-                          Text(
-                            'ExpenseTrak',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge!.copyWith(fontSize: 24),
-                          ),
-
-                          //theme toggle switch
-                          const ThemeToggleSwitch(),
-                        ],
+          //column whole whole screen
+          child: Column(
+            children: [
+              //first child => row for title drawer, and theme toggleswitch
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 32,
+                  bottom: 16,
+                  left: 32,
+                  right: 24,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    //drawer icon
+                    Builder(
+                      builder: (context) => GestureDetector(
+                        onTap: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        child: const Icon(Icons.menu_rounded, size: 32),
                       ),
                     ),
-                    //total amount card
+                    //title
+                    Text(
+                      'ExpenseTrak',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge!.copyWith(fontSize: 24),
+                    ),
+                    //theme toggle switch
+                    const ThemeToggleSwitch(),
+                  ],
+                ),
+              ),
 
-                    //search textfield
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 16,
+              //child 2 => search textfield
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
+                child: SizedBox(
+                  height: 52,
+                  width: double.infinity,
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: 'Search...',
+                      hintStyle: Theme.of(context).textTheme.bodyLarge!,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: SizedBox(
-                        height: 52,
-                        width: double.infinity,
-                        child: TextField(
-                          controller: searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search...',
-                            hintStyle: Theme.of(context).textTheme.bodyLarge!,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          keyboardType: TextInputType.text,
-                          onChanged: (value) {
-                            ref.read(searchProvider.notifier).state = value
-                                .trim()
-                                .toLowerCase();
-                          },
+                    ),
+                    keyboardType: TextInputType.text,
+                    onChanged: (value) {
+                      ref.read(searchProvider.notifier).state = value
+                          .trim()
+                          .toLowerCase();
+                    },
+                  ),
+                ),
+              ),
+
+              //child 3 => column (amount card + text + List)
+              Expanded(
+                child: Column(
+                  children: [
+                    //#1
+                    const MyAmountCard(),
+                    //#2
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          left: 24,
+                          top: 8,
+                          bottom: 16,
+                        ),
+                        child: Text(
+                          'All Expenses',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge!.copyWith(fontSize: 16),
                         ),
                       ),
                     ),
-                    //amount card
-
-                    //below searchbar
+                    //#3
                     Expanded(
-                      child: Column(
-                        children: [
-                          const MyAmountCard(),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 24,
-                                top: 8,
-                                bottom: 16,
-                              ),
-                              child: Text(
-                                'All Expenses',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.titleLarge!.copyWith(fontSize: 16),
-                              ),
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          //maincontent => the list of expenses
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 34),
+                              child: mainContent,
                             ),
-                          ),
-
-                          isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              //maincontent => the list of expenses
-                              : Expanded(child: mainContent),
-                        ],
-                      ),
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
         ),
       ),
     );

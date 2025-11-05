@@ -9,7 +9,7 @@ class ExpenseListNotifier extends StateNotifier<List<Expense>> {
 
   //adding to expense List
   void addExpense(Expense expense) {
-    state = [...state, expense];
+    state = [expense, ...state];
   }
 
   void deleteExpense(Expense expense) {

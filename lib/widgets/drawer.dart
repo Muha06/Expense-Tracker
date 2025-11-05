@@ -17,7 +17,7 @@ class MyDrawer extends ConsumerWidget {
             width: double.infinity,
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? Theme.of(context).colorScheme.onPrimary
+                  ? const Color.fromARGB(71, 72, 2, 89)
                   : Theme.of(context).colorScheme.onPrimaryContainer,
             ),
             child: DrawerHeader(
@@ -25,16 +25,16 @@ class MyDrawer extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "💰 Your wallet's story.",
+                    "💰 Your wallet's story",
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                      fontSize: 24,
+                      fontSize: 20,
                       color: isDarkMode
                           ? Theme.of(context).colorScheme.onPrimaryContainer
                           : Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                   Text(
-                    "-visualized.",
+                    "   -visualized.",
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
                       fontSize: 18,
                       color: Theme.of(context).colorScheme.primary,

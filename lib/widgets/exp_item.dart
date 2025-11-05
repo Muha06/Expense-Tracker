@@ -1,20 +1,26 @@
 import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ExpItem extends StatelessWidget {
+class ExpItem extends ConsumerWidget {
   const ExpItem({super.key, required this.expense});
 
   final Expense expense;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         alignment: Alignment.center,
-        height: 80,
+        height: 85,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(96, 104, 58, 183),
+          color: isDarkMode
+              ? const Color.fromARGB(96, 104, 58, 183)
+              : const Color.fromARGB(209, 39, 0, 65),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -38,11 +44,16 @@ class ExpItem extends StatelessWidget {
           title: Text(
             expense.title,
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.normal,
+              fontSize: 16,
+              color: isDarkMode ? Colors.white : Colors.white,
             ),
           ),
-          subtitle: Text(expense.formattedDate.toString()),
+          subtitle: Text(
+            expense.formattedDate.toString(),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(fontSize: 12, color: Colors.grey),
+          ),
 
           trailing: Text.rich(
             TextSpan(
@@ -55,7 +66,7 @@ class ExpItem extends StatelessWidget {
                   text: expense.amount.toString(),
                   style: Theme.of(context).textTheme.titleLarge!.copyWith(
                     fontSize: 20,
-                    color: Colors.white,
+                    color: isDarkMode ? Colors.white : Colors.white,
                   ),
                 ),
               ],
