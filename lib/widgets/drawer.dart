@@ -1,5 +1,6 @@
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/chart_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ class MyDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final user = FirebaseAuth.instance.currentUser;
 
     return Drawer(
       child: Column(
@@ -58,18 +60,52 @@ class MyDrawer extends ConsumerWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.home_filled),
-                    title: const Text('H O M E'),
+                    title: Text(
+                      'H O M E',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   ListTile(
                     leading: const Icon(Icons.stacked_bar_chart_sharp),
-                    title: const Text('C H A R T'),
+                    title: Text(
+                      'C H A R T',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ChartPage()),
                       );
                     },
+                  ),
+                  const Expanded(child: SizedBox()),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: Text(
+                      'Sign out',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Colors.red,
+                        fontSize: 18,
+                      ),
+                    ),
+                    onTap: () {
+                      FirebaseAuth.instance.signOut();
+                    },
+                    trailing: Text(
+                      user!.email!,
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),

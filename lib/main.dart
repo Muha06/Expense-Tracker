@@ -1,5 +1,9 @@
+import 'package:expense_tracker/firebase_options.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/auth/auth_page.dart';
+import 'package:expense_tracker/screens/expenses.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +20,9 @@ var kdarkColorScheme = ColorScheme.fromSeed(
   seedColor: const Color.fromARGB(255, 39, 0, 65),
 );
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -151,7 +157,17 @@ class MyApp extends ConsumerWidget {
             labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         ),
-        home: const AuthPage(),
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasData) {
+              return const Expenses();
+            }
+            return const AuthPage();
+          },
+        ),
       ),
     );
   }
