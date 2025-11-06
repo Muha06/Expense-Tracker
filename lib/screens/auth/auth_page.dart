@@ -9,6 +9,8 @@ class AuthPage extends StatefulWidget {
 
 class _AuthPageState extends State<AuthPage> {
   final _formKey = GlobalKey<FormState>();
+  bool isLogin = true;
+  String userFullName = '';
   String userEmail = '';
   String userPass = '';
 
@@ -17,6 +19,7 @@ class _AuthPageState extends State<AuthPage> {
       _formKey.currentState!.save();
       print(userEmail);
       print(userPass);
+      print(userFullName);
     }
   }
 
@@ -36,7 +39,7 @@ class _AuthPageState extends State<AuthPage> {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                  height: 500,
+                  height: isLogin ? 500 : 520,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.onPrimary,
@@ -51,14 +54,46 @@ class _AuthPageState extends State<AuthPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 16),
                           Text(
-                            'L O G I N',
+                            isLogin ? 'L O G I N' : 'S I G N U P',
                             style: Theme.of(
                               context,
                             ).textTheme.titleLarge!.copyWith(fontSize: 24),
                           ),
-                          const SizedBox(height: 28),
+
+                          const SizedBox(height: 16),
+                          //fullname
+                          isLogin
+                              ? const SizedBox(height: 16)
+                              : TextFormField(
+                                  decoration: InputDecoration(
+                                    border: const OutlineInputBorder(
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(10),
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey.shade200,
+                                    hintText: 'Full name',
+                                    prefixIcon: const Icon(
+                                      Icons.account_circle,
+                                    ),
+                                  ),
+                                  obscureText: false,
+                                  keyboardType: TextInputType.name,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'please enter your full name';
+                                    }
+                                    return null;
+                                  },
+                                  onSaved: (newValue) {
+                                    userFullName = newValue!;
+                                  },
+                                ),
+                          const SizedBox(height: 16),
+
                           TextFormField(
                             decoration: InputDecoration(
                               border: const OutlineInputBorder(
@@ -82,6 +117,7 @@ class _AuthPageState extends State<AuthPage> {
                               userEmail = newValue!;
                             },
                           ),
+
                           const SizedBox(height: 16),
                           TextFormField(
                             decoration: InputDecoration(
@@ -107,6 +143,8 @@ class _AuthPageState extends State<AuthPage> {
                             },
                           ),
 
+                          const SizedBox(height: 16),
+
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -130,13 +168,19 @@ class _AuthPageState extends State<AuthPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: submit,
-                              child: const Text('Login'),
+                              child: Text(isLogin ? 'Login' : 'Sign up'),
                             ),
                           ),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              setState(() {
+                                isLogin = !isLogin;
+                              });
+                            },
                             child: Text(
-                              "I don't have an account",
+                              isLogin
+                                  ? "I don't have an account"
+                                  : 'I already have an account',
                               style: Theme.of(context).textTheme.bodyLarge!
                                   .copyWith(color: Colors.black),
                             ),
