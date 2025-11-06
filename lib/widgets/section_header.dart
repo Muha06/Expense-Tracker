@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.title});
+  const SectionHeader({super.key, required this.title, required this.onTap});
 
   final String title;
+  final void Function() onTap;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -21,7 +22,7 @@ class SectionHeader extends StatelessWidget {
           ),
           const Spacer(),
           //child2
-          TextButton(onPressed: () {}, child: const Text('View all')),
+          TextButton(onPressed: onTap, child: const Text('View all')),
         ],
       ),
     );

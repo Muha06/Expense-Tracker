@@ -33,6 +33,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/app_logo.png
+    - assets/images/auth 2.png
 
 
 flutter_launcher_icons:

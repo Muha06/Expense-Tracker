@@ -22,8 +22,10 @@ class ThemeToggleSwitch extends ConsumerWidget {
       icons: const [Icons.sunny, Icons.brightness_2_rounded],
       iconSize: 20.0,
       activeBgColors: [
-        [Theme.of(context).colorScheme.primary, Colors.grey],
-        [Theme.of(context).colorScheme.primary, Colors.grey],
+        //left
+        [Theme.of(context).colorScheme.primary, Colors.white],
+        //right
+        const [Colors.white, Colors.black],
       ],
       animate:
           true, // with just animate set to true, default curve = Curves.easeIn

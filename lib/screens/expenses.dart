@@ -4,8 +4,8 @@ import 'dart:math';
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
+import 'package:expense_tracker/screens/all_expenses_screen.dart';
 import 'package:expense_tracker/widgets/amount_card.dart';
-import 'package:expense_tracker/widgets/chart/chart.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:expense_tracker/widgets/drawer.dart';
 import 'package:expense_tracker/widgets/section_header.dart';
@@ -147,10 +147,6 @@ class _ExpensesState extends ConsumerState<Expenses> {
   void initState() {
     loadItems();
     super.initState();
-    //unfocus keyboard
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).unfocus();
-    });
   }
 
   @override
@@ -193,113 +189,142 @@ class _ExpensesState extends ConsumerState<Expenses> {
 
       //seting app bg color
       body: SafeArea(
-        child: Container(
-          decoration: isDarkMode
-              ? const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    colors: [
-                      Color.fromARGB(255, 74, 2, 105),
-                      Color.fromARGB(136, 17, 1, 27),
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: Container(
+            decoration: isDarkMode
+                ? const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      colors: [
+                        Color.fromARGB(255, 74, 2, 105),
+                        Color.fromARGB(136, 17, 1, 27),
+                      ],
+                    ),
+                  )
+                : null,
+
+            //column whole whole screen
+            child: Column(
+              children: [
+                //first child => row for title drawer, and theme toggleswitch
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: 16,
+                    bottom: 16,
+                    left: 8,
+                    right: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      //drawer icon
+                      Builder(
+                        builder: (context) => GestureDetector(
+                          onTap: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                          child: const Icon(Icons.menu_rounded, size: 32),
+                        ),
+                      ),
+                      //title
+                      Text(
+                        'ExpenseTrak',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleLarge!.copyWith(fontSize: 24),
+                      ),
+                      //theme toggle switch
+                      const ThemeToggleSwitch(),
                     ],
                   ),
-                )
-              : null,
+                ),
 
-          //column whole whole screen
-          child: Column(
-            children: [
-              //first child => row for title drawer, and theme toggleswitch
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 16,
-                  bottom: 16,
-                  left: 8,
-                  right: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    //drawer icon
-                    Builder(
-                      builder: (context) => GestureDetector(
-                        onTap: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                        child: const Icon(Icons.menu_rounded, size: 32),
+                //child 2 => search textfield
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  child: SizedBox(
+                    height: 52,
+                    width: double.infinity,
+                    child: TextField(
+                      autofocus: false,
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Search...',
+                        hintStyle: Theme.of(context).textTheme.bodyLarge!,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                       ),
+                      keyboardType: TextInputType.text,
+                      onChanged: (value) {
+                        ref.read(searchProvider.notifier).state = value
+                            .trim()
+                            .toLowerCase();
+                      },
                     ),
-                    //title
-                    Text(
-                      'ExpenseTrak',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge!.copyWith(fontSize: 24),
-                    ),
-                    //theme toggle switch
-                    const ThemeToggleSwitch(),
-                  ],
-                ),
-              ),
-
-              //child 2 => search textfield
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 16,
-                ),
-                child: SizedBox(
-                  height: 52,
-                  width: double.infinity,
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search),
-                      hintText: 'Search...',
-                      hintStyle: Theme.of(context).textTheme.bodyLarge!,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    keyboardType: TextInputType.text,
-                    onChanged: (value) {
-                      ref.read(searchProvider.notifier).state = value
-                          .trim()
-                          .toLowerCase();
-                    },
                   ),
                 ),
-              ),
 
-              //child 3 => amount card
-              const MyAmountCard(),
+                //child 3 => amount card
+                const MyAmountCard(),
 
-              //child 4 => Listview (row(text + btn) , maincontent, sctheader, list2)
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(seconds: 2),
-                  child: isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView(
-                          children: [
-                            //#1 padding(row(text + button) )
-                            const SectionHeader(title: 'Today'),
+                //child 4 => Listview (row(text + btn) , maincontent, sctheader, list2)
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(seconds: 1),
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ListView(
+                            children: [
+                              //#1 padding(row(text + button) )
+                              SectionHeader(
+                                title: 'Today',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (ctx) => AllExpensesScreen(
+                                        expenses: today,
+                                        onDeleteExpense: deleteExpense,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
 
-                            //#2 => our expenses list (listview.builder)
-                            ExpensesList(
-                              expenses: todayPreview,
-                              onDeleteExpense: deleteExpense,
-                            ),
-                            const SectionHeader(title: 'yesterday'),
-                            ExpensesList(
-                              expenses: yesterdayPreview,
-                              onDeleteExpense: deleteExpense,
-                            ),
-                          ],
-                        ),
+                              //#2 => our expenses list (listview.builder)
+                              ExpensesList(
+                                expenses: todayPreview,
+                                onDeleteExpense: deleteExpense,
+                              ),
+                              SectionHeader(
+                                title: 'Yesterday',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (ctx) => AllExpensesScreen(
+                                        expenses: yesterday,
+                                        onDeleteExpense: deleteExpense,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              ExpensesList(
+                                expenses: yesterdayPreview,
+                                onDeleteExpense: deleteExpense,
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

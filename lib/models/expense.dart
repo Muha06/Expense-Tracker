@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 const uuid = Uuid();
 final formatter = DateFormat.yMd();
 
-enum Category { food, transport, airtime, leisure }
+enum Category { food, transport, airtime, leisure, other }
 
 const categoryIcons = {
   Category.food: Icons.food_bank_outlined,
   Category.transport: Icons.emoji_transportation_outlined,
   Category.airtime: Icons.call,
   Category.leisure: Icons.beach_access,
+  Category.other: Icons.circle_rounded,
 };
 
 class Expense {

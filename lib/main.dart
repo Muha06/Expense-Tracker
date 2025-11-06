@@ -1,5 +1,5 @@
 import 'package:expense_tracker/providers/theme_toggle.dart';
-import 'package:expense_tracker/screens/expenses.dart';
+import 'package:expense_tracker/screens/auth/auth_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -151,7 +151,7 @@ class MyApp extends ConsumerWidget {
             labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         ),
-        home: const Expenses(),
+        home: const AuthPage(),
       ),
     );
   }
