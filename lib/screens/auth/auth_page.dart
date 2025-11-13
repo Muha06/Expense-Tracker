@@ -1,6 +1,4 @@
-import 'package:expense_tracker/models/expense.dart';
-import 'package:expense_tracker/screens/expenses.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_tracker/screens/auth/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class AuthPage extends StatefulWidget {
@@ -11,7 +9,7 @@ class AuthPage extends StatefulWidget {
 }
 
 class _AuthPageState extends State<AuthPage> {
-  final user = FirebaseAuth.instance;
+  final authService = AuthService();
 
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true;
@@ -23,21 +21,20 @@ class _AuthPageState extends State<AuthPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        await user.createUserWithEmailAndPassword(
-          email: userEmail,
-          password: userPass,
+        authService.signupWithEmailAndPassword(
+          userEmail,
+          userPass,
+          userFullName,
         );
+
+        //success snackbar
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Sign up successful')));
-      } on FirebaseAuthException catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message ?? 'signup error')),
-        );
-      } catch (e) {
+      } catch (error) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Something went wrong!')));
+        ).showSnackBar(const SnackBar(content: Text('signup error')));
       }
     }
   }
@@ -46,22 +43,19 @@ class _AuthPageState extends State<AuthPage> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       try {
-        await user.signInWithEmailAndPassword(
-          email: userEmail,
-          password: userPass,
-        );
+        await authService.signInWithEmailAndPassword(userEmail, userPass);
+        //logic to add user's fullname to user profile db
+
+        //success snackbar
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Sign in successful')));
-        // Navigate to home page (replace with your actual page)
-      } on FirebaseAuthException catch (error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message ?? 'Login error')));
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Something went wrong!')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Login error')));
+        }
       }
     }
   }

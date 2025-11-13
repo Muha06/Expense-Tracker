@@ -12,6 +12,10 @@ class ExpenseListNotifier extends StateNotifier<List<Expense>> {
     state = [expense, ...state];
   }
 
+void setExpenses(List<Expense> expenses) {
+    state = expenses;
+  }
+
   void deleteExpense(Expense expense) {
     state = state.where((e) {
       return e != expense;

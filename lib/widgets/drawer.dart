@@ -1,6 +1,7 @@
 import 'package:expense_tracker/providers/theme_toggle.dart';
+import 'package:expense_tracker/screens/auth/auth_service.dart';
 import 'package:expense_tracker/screens/chart_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_tracker/screens/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +11,7 @@ class MyDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final user = FirebaseAuth.instance.currentUser;
+    final AuthService authService = AuthService();
 
     return Drawer(
       child: Column(
@@ -85,6 +86,22 @@ class MyDrawer extends ConsumerWidget {
                       );
                     },
                   ),
+                  ListTile(
+                    leading: const Icon(Icons.stacked_bar_chart_sharp),
+                    title: Text(
+                      'P R O F I L E',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProfilePage()),
+                      );
+                    },
+                  ),
                   const Expanded(child: SizedBox()),
                   ListTile(
                     leading: const Icon(Icons.logout),
@@ -96,10 +113,10 @@ class MyDrawer extends ConsumerWidget {
                       ),
                     ),
                     onTap: () {
-                      FirebaseAuth.instance.signOut();
+                      authService.signOut();
                     },
                     trailing: Text(
-                      user!.email!,
+                      authService.getUserEmail().toString(),
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                         color: Colors.black,
                         fontSize: 14,

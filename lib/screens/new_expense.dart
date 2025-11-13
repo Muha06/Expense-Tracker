@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final formatter = DateFormat.yMd();
 
@@ -18,6 +16,7 @@ class NewExpense extends ConsumerStatefulWidget {
 }
 
 class _NewExpenseState extends ConsumerState<NewExpense> {
+  //final uid = FirebaseAuth.instance.currentUser!.uid;
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? expenseDate;
@@ -69,36 +68,30 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
 
     //submitting the expense
     try {
-      final url = Uri.https(
-        'expense-tracker-32102-default-rtdb.firebaseio.com',
-        'expenses.json',
-      );
-      //
-      setState(() {
-        isAdding = true;
-      });
-
-      //http post
-      final response = await http.post(
-        url,
-        headers: {'content-type': 'application/json'},
-        body: json.encode({
-          'title': _titleController.text,
-          'amount': enteredAmount,
-          'category': _selectedCategory.name,
-          'date': expenseDate!.millisecondsSinceEpoch,
-        }),
-      );
-      if (response.statusCode >= 400) {
-        throw Exception('An error occured!');
+      final supabase = Supabase.instance.client;
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        return;
       }
-      //decode firebase generated id
-      final firebaseKey = json.decode(response.body)['name'];
+
+      //upload to Supabase
+      final response = await supabase
+          .from('expenses')
+          .insert({
+            'user_id': user.id,
+            'title': _titleController.text,
+            'amount': enteredAmount,
+            'category': _selectedCategory.name,
+            'date': expenseDate!.toIso8601String(),
+          })
+          .select()
+          .maybeSingle();
+
       ref
           .read(expenseListProvider.notifier)
           .addExpense(
             Expense(
-              id: firebaseKey,
+              id: response!['id'] as String,
               title: _titleController.text,
               amount: enteredAmount,
               date: expenseDate!,
@@ -108,7 +101,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
 
       Navigator.pop(context);
     } catch (e) {
-      debugPrint('Error adding expense:  $e');
+      print('Error adding expense:  $e');
       if (mounted) {
         showDialog(
           context: context,
@@ -119,7 +112,6 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
         );
       }
     }
-    //http url
   }
 
   Widget _buildCategoryDropdown() {
@@ -143,7 +135,8 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
   Widget _buildAmountField() {
     return TextField(
       controller: _amountController,
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+
       decoration: const InputDecoration(
         prefixText: 'KES ',
         labelText: 'Amount',

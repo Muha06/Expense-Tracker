@@ -1,10 +1,9 @@
 import 'dart:convert';
-import 'dart:math';
-
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/all_expenses_screen.dart';
+import 'package:expense_tracker/screens/auth/expense_service.dart';
 import 'package:expense_tracker/widgets/amount_card.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:expense_tracker/widgets/drawer.dart';
@@ -26,6 +25,7 @@ class Expenses extends ConsumerStatefulWidget {
 class _ExpensesState extends ConsumerState<Expenses> {
   bool isLoading = false;
   final searchController = TextEditingController();
+  late Future<List<Map<String, dynamic>>> _loadItems;
 
   void _showExpenseOverlay() {
     showModalBottomSheet(
@@ -42,10 +42,9 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final expenseIndex = ref.read(expenseListProvider).indexOf(expense);
     ref.read(expenseListProvider.notifier).deleteExpense(expense);
 
-    //delete in db
     final url = Uri.https(
-      'expense-tracker-32102-default-rtdb.firebaseio.com',
-      'expenses/${expense.id}.json',
+      'expense-tracker-b5a45-default-rtdb.firebaseio.com',
+      'expenses.json',
     );
 
     final response = await http.delete(url);
@@ -56,97 +55,89 @@ class _ExpensesState extends ConsumerState<Expenses> {
           .insertExpense(expense, expenseIndex);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Something Unexpected happened!'),
+          content: Text('Something went wrong!'),
           duration: Duration(seconds: 2),
         ),
       );
-      return;
-    }
+    } else {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("'${expense.title}' deleted"),
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              ref
+                  .read(expenseListProvider.notifier)
+                  .insertExpense(expense, expenseIndex);
 
-    //delete locally
-
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("'${expense.title}' deleted"),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'Undo',
-          //undo logic locally & in db
-          onPressed: () async {
-            ref
-                .read(expenseListProvider.notifier)
-                .insertExpense(expense, expenseIndex);
-            //undo in the db
-            try {
-              await http.put(
-                url,
-                body: json.encode({
-                  'title': expense.title,
-                  'amount': expense.amount,
-                  'date': expense.date.millisecondsSinceEpoch,
-                  'category': expense.category.name,
-                }),
-              );
-            } catch (_) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Failed to restore expense in DB'),
-                ),
-              );
-            }
-          },
+              try {
+                await http.put(
+                  url,
+                  body: json.encode({
+                    'title': expense.title,
+                    'amount': expense.amount,
+                    'date': expense.date.millisecondsSinceEpoch,
+                    'category': expense.category.name,
+                  }),
+                );
+              } catch (_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to restore expense in DB'),
+                  ),
+                );
+              }
+            },
+          ),
         ),
-      ),
-    );
-  }
-
-  void loadItems() async {
-    final url = Uri.https(
-      'expense-tracker-32102-default-rtdb.firebaseio.com',
-      'expenses.json',
-    );
-
-    setState(() {
-      isLoading = true;
-    });
-
-    final response = await http.get(url);
-    final Map<String, dynamic>? expenseData = json.decode(response.body);
-
-    if (expenseData != null) {
-      for (final exp in expenseData.entries) {
-        final int timeStamp = exp.value['date'];
-        DateTime date = DateTime.fromMillisecondsSinceEpoch(timeStamp);
-        final category = Category.values.firstWhere((c) {
-          return c.name == exp.value['category'];
-        });
-
-        ref
-            .read(expenseListProvider.notifier)
-            .addExpense(
-              Expense(
-                id: exp.key,
-                title: exp.value['title'],
-                amount: exp.value['amount'],
-                date: date,
-                category: category,
-              ),
-            );
-      }
+      );
     }
-
-    // always stop loading, even if DB was empty
-    setState(() {
-      isLoading = false;
-    });
   }
 
-  //load the expenses list when app starts
+  // Future<List<Map<String, dynamic>>> loadItems() async {
+  //   try {
+  //     setState(() {
+  //       isLoading = true;
+  //     });
+
+  //     if (data == null) {
+  //       ref.read(expenseListProvider.notifier).setExpenses([]);
+  //       setState(() => isLoading = false);
+  //       return;
+  //     }
+
+  //     final List<Expense> loadedExpenses = [];
+  //     for (final item in data.entries) {
+  //       final int timestamp = item.value['date'];
+  //       final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+  //       final category = Category.values.firstWhere(
+  //         (cat) => cat.name == item.value['category'],
+  //       );
+  //       loadedExpenses.add(
+  //         Expense(
+  //           id: item.key,
+  //           title: item.value['title'],
+  //           amount: item.value['amount'],
+  //           date: date,
+  //           category: category,
+  //         ),
+  //       );
+  //     }
+
+  //     ref.read(expenseListProvider.notifier).setExpenses(loadedExpenses);
+  //   } catch (e) {
+  //     print('Error loading expenses: $e');
+  //   } finally {
+  //     setState(() => isLoading = false);
+  //   }
+  // }
+
   @override
   void initState() {
-    loadItems();
     super.initState();
+    _loadItems = ExpenseService().getExpenses();
   }
 
   @override
@@ -161,6 +152,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     final now = DateTime.now();
+
     final today = allExpenses.where((exp) {
       return exp.date.year == now.year &&
           exp.date.month == now.month &&
@@ -173,6 +165,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
           exp.date.month == y.month &&
           exp.date.day == y.day;
     }).toList();
+
     final todayPreview = today.take(3).toList();
     final yesterdayPreview = yesterday.take(3).toList();
 
@@ -183,14 +176,9 @@ class _ExpensesState extends ConsumerState<Expenses> {
         onPressed: _showExpenseOverlay,
         child: const Icon(Icons.add),
       ),
-
-      //drawer
       drawer: const MyDrawer(),
-
-      //seting app bg color
       body: SafeArea(
         child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: Container(
             decoration: isDarkMode
@@ -204,44 +192,29 @@ class _ExpensesState extends ConsumerState<Expenses> {
                     ),
                   )
                 : null,
-
-            //column whole whole screen
             child: Column(
               children: [
-                //first child => row for title drawer, and theme toggleswitch
                 Padding(
-                  padding: const EdgeInsets.only(
-                    top: 16,
-                    bottom: 16,
-                    left: 8,
-                    right: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      //drawer icon
                       Builder(
                         builder: (context) => GestureDetector(
-                          onTap: () {
-                            Scaffold.of(context).openDrawer();
-                          },
+                          onTap: () => Scaffold.of(context).openDrawer(),
                           child: const Icon(Icons.menu_rounded, size: 32),
                         ),
                       ),
-                      //title
                       Text(
                         'ExpenseTrak',
                         style: Theme.of(
                           context,
                         ).textTheme.titleLarge!.copyWith(fontSize: 24),
                       ),
-                      //theme toggle switch
                       const ThemeToggleSwitch(),
                     ],
                   ),
                 ),
-
-                //child 2 => search textfield
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 8,
@@ -251,17 +224,14 @@ class _ExpensesState extends ConsumerState<Expenses> {
                     height: 52,
                     width: double.infinity,
                     child: TextField(
-                      autofocus: false,
                       controller: searchController,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search),
                         hintText: 'Search...',
-                        hintStyle: Theme.of(context).textTheme.bodyLarge!,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      keyboardType: TextInputType.text,
                       onChanged: (value) {
                         ref.read(searchProvider.notifier).state = value
                             .trim()
@@ -270,11 +240,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
                     ),
                   ),
                 ),
-
-                //child 3 => amount card
                 const MyAmountCard(),
-
-                //child 4 => Listview (row(text + btn) , maincontent, sctheader, list2)
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(seconds: 1),
@@ -282,7 +248,6 @@ class _ExpensesState extends ConsumerState<Expenses> {
                         ? const Center(child: CircularProgressIndicator())
                         : ListView(
                             children: [
-                              //#1 padding(row(text + button) )
                               SectionHeader(
                                 title: 'Today',
                                 onTap: () {
@@ -297,11 +262,11 @@ class _ExpensesState extends ConsumerState<Expenses> {
                                 },
                               ),
 
-                              //#2 => our expenses list (listview.builder)
                               ExpensesList(
                                 expenses: todayPreview,
                                 onDeleteExpense: deleteExpense,
                               ),
+
                               SectionHeader(
                                 title: 'Yesterday',
                                 onTap: () {
@@ -315,6 +280,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
                                   );
                                 },
                               ),
+                              
                               ExpensesList(
                                 expenses: yesterdayPreview,
                                 onDeleteExpense: deleteExpense,

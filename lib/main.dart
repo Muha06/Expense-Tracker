@@ -1,12 +1,10 @@
-import 'package:expense_tracker/firebase_options.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/auth/auth_page.dart';
 import 'package:expense_tracker/screens/expenses.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Light mode color scheme
 var kcolorScheme = ColorScheme.fromSeed(
@@ -22,7 +20,12 @@ var kdarkColorScheme = ColorScheme.fromSeed(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  //supabase setup
+  await Supabase.initialize(
+    url: 'https://yssuzcppycmbrqbnkybh.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlzc3V6Y3BweWNtYnJxYm5reWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NTY3MTQsImV4cCI6MjA3ODUzMjcxNH0.72OGqshyzakkzRKO5EeAYaHrVrxpUqxOrOoqdXWAkDY',
+  );
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -157,15 +160,23 @@ class MyApp extends ConsumerWidget {
             labelStyle: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
           ),
         ),
-        home: StreamBuilder<User?>(
-          stream: FirebaseAuth.instance.authStateChanges(),
+        home: StreamBuilder(
+          stream: Supabase.instance.client.auth.onAuthStateChange,
           builder: (context, snapshot) {
+            //if is loading
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasData) {
-              return const Expenses();
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
             }
-            return const AuthPage();
+
+            // if there is
+            final session = snapshot.hasData ? snapshot.data!.session : null;
+
+            if (session == null) {
+              return const AuthPage();
+            }
+            return const Expenses();
           },
         ),
       ),
