@@ -16,7 +16,6 @@ class NewExpense extends ConsumerStatefulWidget {
 }
 
 class _NewExpenseState extends ConsumerState<NewExpense> {
-  //final uid = FirebaseAuth.instance.currentUser!.uid;
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? expenseDate;
@@ -66,17 +65,12 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
       return;
     }
 
-    //submitting the expense
     try {
       final supabase = Supabase.instance.client;
-      final user = Supabase.instance.client.auth.currentUser;
+      final user = supabase.auth.currentUser;
 
-      //if no logged in user
-      if (user == null) {
-        return;
-      }
+      if (user == null) return;
 
-      //upload to Supabase
       final response = await supabase
           .from('expenses')
           .insert({
@@ -111,9 +105,7 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
             content: const Text('Error adding an expense'),
             actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 child: const Text('Okay'),
               ),
             ],
@@ -141,26 +133,6 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
     );
   }
 
-  Widget _buildAmountField() {
-    return TextField(
-      controller: _amountController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-
-      decoration: const InputDecoration(
-        prefixText: 'KES ',
-        labelText: 'Amount',
-      ),
-    );
-  }
-
-  Widget _buildTitleField() {
-    return TextField(
-      controller: _titleController,
-      maxLength: 50,
-      decoration: const InputDecoration(labelText: 'Expense Title'),
-    );
-  }
-
   @override
   void dispose() {
     _titleController.dispose();
@@ -174,156 +146,135 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, // so taps on empty space register
-      onTap: () {
-        FocusScope.of(context).unfocus(); // removes focus from any TextField
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: LayoutBuilder(
         builder: (ctx, constraints) {
-          final isWide = constraints.maxWidth >= 600;
-          return SizedBox(
-            //height: double.infinity,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(18, 32, 18, keyboardSpace + 13),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isWide)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _titleController,
-                            maxLength: 50,
-                            decoration: const InputDecoration(
-                              labelText: 'Expense Title',
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(18, 32, 18, keyboardSpace + 13),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _titleController,
+                  maxLength: 50,
+                  decoration: const InputDecoration(
+                    hintText: 'Expense Title',
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white, width: 0.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                //amount date row
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          prefixText: 'KES ',
+                          labelText: 'Amount',
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.white,
+                              width: 0.5,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: _buildAmountField()),
-                      ],
-                    )
-                  else
-                    const SizedBox(height: 10),
-                  _buildTitleField(),
-                  //row 2
-                  if (isWide)
-                    Row(
-                      children: [
-                        _buildCategoryDropdown(),
-                        const Spacer(),
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(
-                                expenseDate == null
-                                    ? 'No date selected'
-                                    : formatter.format(expenseDate!),
-                                style: Theme.of(context).textTheme.labelMedium!
-                                    .copyWith(
-                                      color: isDarkMode
-                                          ? Colors.white
-                                          : Colors.black,
-                                      fontSize: 10,
-                                    ),
-                              ),
-                              const SizedBox(width: 5),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.calendar_month_outlined,
-                                  size: 24,
-                                ),
-                                onPressed: _showDatePickerScreen,
-                              ),
-                            ],
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white),
                           ),
                         ),
-                      ],
-                    )
-                  else
-                    Row(
-                      children: [
-                        Expanded(child: _buildAmountField()),
-                        const SizedBox(width: 20),
-
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Text(
-                                expenseDate == null
-                                    ? 'No date selected'
-                                    : formatter.format(expenseDate!),
-                                style: Theme.of(context).textTheme.labelMedium!
-                                    .copyWith(
-                                      color: isDarkMode
-                                          ? Colors.white
-                                          : Colors.black,
-                                      fontSize: 10,
-                                    ),
-                              ),
-                              const SizedBox(width: 5),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.calendar_month_outlined,
-                                  size: 24,
-                                ),
-                                onPressed: _showDatePickerScreen,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-
-                  const SizedBox(height: 10),
-
-                  //row 3 (buttons)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _buildCategoryDropdown(),
-                      TextButton(
-                        onPressed: isAdding
-                            ? null
-                            : () {
-                                Navigator.pop(context);
-                              },
-                        child: Text(
-                          'Cancel',
-                          style: Theme.of(context).textTheme.bodySmall!
-                              .copyWith(
-                                color: isDarkMode
-                                    ? Colors.white
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
-                              ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          expenseDate == null
+                              ? Text(
+                                  'No date selected',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium!
+                                      .copyWith(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                        fontSize: 10,
+                                      ),
+                                )
+                              : Text(
+                                  formatter.format(expenseDate!),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium!
+                                      .copyWith(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : Colors.black,
+                                        fontSize: 14,
+                                      ),
+                                ),
+                          const SizedBox(width: 5),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.calendar_month_outlined,
+                              size: 24,
+                            ),
+                            onPressed: _showDatePickerScreen,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildCategoryDropdown(),
+                    TextButton(
+                      onPressed: isAdding ? null : () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: isDarkMode
+                              ? Colors.white
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
                         ),
                       ),
-                      const Expanded(child: SizedBox()),
-                      ElevatedButton(
-                        onPressed: _submitExpenseForm,
-                        child: isAdding
-                            ? const SizedBox(
-                                height: 16,
-                                width: 8,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                'Add expense',
-                                style: Theme.of(context).textTheme.bodySmall!
-                                    .copyWith(color: Colors.white),
+                    ),
+                    const Expanded(child: SizedBox()),
+                    ElevatedButton(
+                      onPressed: _submitExpenseForm,
+                      child: isAdding
+                          ? const SizedBox(
+                              height: 16,
+                              width: 8,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
                               ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                            )
+                          : Text(
+                              'Add expense',
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(color: Colors.white),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           );
         },

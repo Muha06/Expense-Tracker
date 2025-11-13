@@ -7,13 +7,17 @@ class ExpenseService {
   //get expenses from db
   Future<List<Map<String, dynamic>>> getExpenses() async {
     final user = supabase.auth.currentUser;
-
+    if (user == null) {
+      print('⚠️ No user logged in');
+      return [];
+    }
     final response = await Supabase.instance.client
         .from('expenses')
         .select()
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('created_at', ascending: false);
 
+    print(response);
     return List<Map<String, dynamic>>.from(response);
   }
 
@@ -23,6 +27,5 @@ class ExpenseService {
         .from('expenses')
         .delete()
         .eq('id', expense.id);
-    print(response);
   }
 }

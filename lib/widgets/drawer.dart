@@ -64,8 +64,8 @@ class MyDrawer extends ConsumerWidget {
                     title: Text(
                       'H O M E',
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.black,
-                        fontSize: 18,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: 16,
                       ),
                     ),
                     onTap: () => Navigator.of(context).pop(),
@@ -75,8 +75,8 @@ class MyDrawer extends ConsumerWidget {
                     title: Text(
                       'C H A R T',
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.black,
-                        fontSize: 18,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: 16,
                       ),
                     ),
                     onTap: () {
@@ -91,8 +91,8 @@ class MyDrawer extends ConsumerWidget {
                     title: Text(
                       'P R O F I L E',
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                        color: Colors.black,
-                        fontSize: 18,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: 16,
                       ),
                     ),
                     onTap: () {
@@ -109,21 +109,21 @@ class MyDrawer extends ConsumerWidget {
                       'Sign out',
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
                         color: Colors.red,
-                        fontSize: 18,
+                        fontSize: 14,
                       ),
                     ),
                     onTap: () {
                       authService.signOut();
                     },
-                    trailing: Text(
+                    subtitle: Text(
                       authService.getUserEmail().toString(),
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                        fontSize: 10,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
