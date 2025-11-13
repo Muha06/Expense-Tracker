@@ -12,21 +12,10 @@ class ExpenseListNotifier extends StateNotifier<List<Expense>> {
     state = [expense, ...state];
   }
 
-void setExpenses(List<Expense> expenses) {
-    state = expenses;
-  }
-
   void deleteExpense(Expense expense) {
     state = state.where((e) {
       return e != expense;
     }).toList();
-  }
-
-  void insertExpense(Expense expense, int index) {
-    //create a copy
-    final newList = List<Expense>.from(state);
-    newList.insert(index, expense);
-    state = newList;
   }
 
   int get totalExpenseAmount {
@@ -37,6 +26,8 @@ void setExpenses(List<Expense> expenses) {
     return total;
   }
 }
+
+//providers
 
 final expenseListProvider =
     StateNotifierProvider<ExpenseListNotifier, List<Expense>>((ref) {

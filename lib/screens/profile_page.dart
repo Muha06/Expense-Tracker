@@ -1,4 +1,4 @@
-import 'package:expense_tracker/screens/auth/auth_service.dart';
+import 'package:expense_tracker/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -62,8 +62,6 @@ class _ProfilePageState extends State<ProfilePage> {
           userId: userId,
           fullName: nameController.text.trim(),
         );
-        print(nameController);
-        print(userId);
         await _loadProfile();
       } catch (e) {
         ScaffoldMessenger.of(

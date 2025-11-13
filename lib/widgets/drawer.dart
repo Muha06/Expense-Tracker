@@ -1,5 +1,5 @@
 import 'package:expense_tracker/providers/theme_toggle.dart';
-import 'package:expense_tracker/screens/auth/auth_service.dart';
+import 'package:expense_tracker/services/auth_service.dart';
 import 'package:expense_tracker/screens/chart_page.dart';
 import 'package:expense_tracker/screens/profile_page.dart';
 import 'package:flutter/material.dart';

@@ -1,4 +1,4 @@
-import 'package:expense_tracker/screens/auth/auth_service.dart';
+import 'package:expense_tracker/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class AuthPage extends StatefulWidget {

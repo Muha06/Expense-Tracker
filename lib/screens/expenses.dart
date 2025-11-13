@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:expense_tracker/providers/expense_list_provider.dart';
 import 'package:expense_tracker/providers/search_provider.dart';
 import 'package:expense_tracker/providers/theme_toggle.dart';
 import 'package:expense_tracker/screens/all_expenses_screen.dart';
-import 'package:expense_tracker/screens/auth/expense_service.dart';
+import 'package:expense_tracker/services/expense_service.dart';
 import 'package:expense_tracker/widgets/amount_card.dart';
 import 'package:expense_tracker/screens/new_expense.dart';
 import 'package:expense_tracker/widgets/drawer.dart';
@@ -13,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:expense_tracker/models/expense.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Expenses extends ConsumerStatefulWidget {
   const Expenses({super.key});
@@ -25,6 +24,7 @@ class Expenses extends ConsumerStatefulWidget {
 class _ExpensesState extends ConsumerState<Expenses> {
   bool isLoading = false;
   final searchController = TextEditingController();
+  // ignore: unused_field
   late Future<List<Map<String, dynamic>>> _loadItems;
 
   void _showExpenseOverlay() {
@@ -38,101 +38,66 @@ class _ExpensesState extends ConsumerState<Expenses> {
     );
   }
 
-  void deleteExpense(Expense expense) async {
-    final expenseIndex = ref.read(expenseListProvider).indexOf(expense);
-    ref.read(expenseListProvider.notifier).deleteExpense(expense);
+  Future<void> deleteExpense(Expense expense) async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
 
-    final url = Uri.https(
-      'expense-tracker-b5a45-default-rtdb.firebaseio.com',
-      'expenses.json',
-    );
+    try {
+      // Delete the row
+      final response = await supabase
+          .from('expenses')
+          .delete()
+          .eq('id', expense.id)
+          .select();
 
-    final response = await http.delete(url);
+      //if response is empty
+      if (response.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Expense not found or delete failed')),
+        );
+        return;
+      }
+      // Update local state
+      ref.read(expenseListProvider.notifier).deleteExpense(expense);
 
-    if (response.statusCode >= 400) {
-      ref
-          .read(expenseListProvider.notifier)
-          .insertExpense(expense, expenseIndex);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Something went wrong!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).clearSnackBars();
+      //undo
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("'${expense.title}' deleted"),
-          duration: const Duration(seconds: 2),
+          content: const Text('expense deleted'),
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () async {
-              ref
-                  .read(expenseListProvider.notifier)
-                  .insertExpense(expense, expenseIndex);
-
-              try {
-                await http.put(
-                  url,
-                  body: json.encode({
+              //add expense to db
+              final response = await supabase
+                  .from('expenses')
+                  .insert({
+                    'id': expense.id,
+                    'user_id': user!.id,
                     'title': expense.title,
+                    'category': expense.category,
                     'amount': expense.amount,
-                    'date': expense.date.millisecondsSinceEpoch,
-                    'category': expense.category.name,
-                  }),
-                );
-              } catch (_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Failed to restore expense in DB'),
-                  ),
-                );
+                    'date': expense.date.toIso8601String(),
+                  })
+                  .select()
+                  .maybeSingle();
+
+              //if inserted, insert to riverpod
+              if (response != null) {
+                ref.read(expenseListProvider.notifier).addExpense(expense);
               }
             },
           ),
         ),
       );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to delete expense')));
+      ref.read(expenseListProvider.notifier).addExpense(expense);
     }
+
+    //undo
   }
-
-  // Future<List<Map<String, dynamic>>> loadItems() async {
-  //   try {
-  //     setState(() {
-  //       isLoading = true;
-  //     });
-
-  //     if (data == null) {
-  //       ref.read(expenseListProvider.notifier).setExpenses([]);
-  //       setState(() => isLoading = false);
-  //       return;
-  //     }
-
-  //     final List<Expense> loadedExpenses = [];
-  //     for (final item in data.entries) {
-  //       final int timestamp = item.value['date'];
-  //       final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-  //       final category = Category.values.firstWhere(
-  //         (cat) => cat.name == item.value['category'],
-  //       );
-  //       loadedExpenses.add(
-  //         Expense(
-  //           id: item.key,
-  //           title: item.value['title'],
-  //           amount: item.value['amount'],
-  //           date: date,
-  //           category: category,
-  //         ),
-  //       );
-  //     }
-
-  //     ref.read(expenseListProvider.notifier).setExpenses(loadedExpenses);
-  //   } catch (e) {
-  //     print('Error loading expenses: $e');
-  //   } finally {
-  //     setState(() => isLoading = false);
-  //   }
-  // }
 
   @override
   void initState() {
@@ -152,13 +117,13 @@ class _ExpensesState extends ConsumerState<Expenses> {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     final now = DateTime.now();
-
+    //filter today's expenses
     final today = allExpenses.where((exp) {
       return exp.date.year == now.year &&
           exp.date.month == now.month &&
           exp.date.day == now.day;
     }).toList();
-
+    //filter yesterday's expenses
     final yesterday = allExpenses.where((exp) {
       final y = now.subtract(const Duration(days: 1));
       return exp.date.year == y.year &&
@@ -280,7 +245,7 @@ class _ExpensesState extends ConsumerState<Expenses> {
                                   );
                                 },
                               ),
-                              
+
                               ExpensesList(
                                 expenses: yesterdayPreview,
                                 onDeleteExpense: deleteExpense,

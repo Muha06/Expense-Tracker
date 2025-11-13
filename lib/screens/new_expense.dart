@@ -70,6 +70,8 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
     try {
       final supabase = Supabase.instance.client;
       final user = Supabase.instance.client.auth.currentUser;
+
+      //if no logged in user
       if (user == null) {
         return;
       }
@@ -101,13 +103,20 @@ class _NewExpenseState extends ConsumerState<NewExpense> {
 
       Navigator.pop(context);
     } catch (e) {
-      print('Error adding expense:  $e');
       if (mounted) {
         showDialog(
           context: context,
-          builder: (ctx) => const AlertDialog(
-            title: Text('Error'),
-            content: Text('An error ocurred!'),
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Error adding an expense'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Okay'),
+              ),
+            ],
           ),
         );
       }
